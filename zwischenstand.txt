@@ -14,5 +14,11 @@
 	-Vinzenz: Haus
 	-Lukas: Straße
 - Gibt es bereits ähnliche Addons / Technologien (auch andere Software)?
+  Es gibt bereits einige Addon für die Vegetation (teilweise kostenpflichtig):
+       -Graswald
+       -Jungle Scapes
+       -True Grass 2.0
+       -Tree and Grass library
+       -Scatter
    - Wie sind diese Umgesetzt (technisch und UX).
    - Wollt ihr euch davon absetzen (kein muss)
