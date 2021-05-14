@@ -1,0 +1,18 @@
+-Wie läuft es, Welche Ziele wurden bereits erreicht
+   - Wenn ihr noch nicht so weit seit, wie wollt ihr die gesetzten Ziele angehen
+	Jeder in der Gruppe baut ein Prototyp, welche dann im End-file zusammengesetzt werden:
+	-Manuel: Wiese
+	-Romtham: Baum
+	-Vinzenz: Haus
+	-Lukas: Straße
+- Wo sind Schwierigkeiten
+	-Umsetzung der Detailstufen
+	-Einstieg ins Programmieren
+- Wer macht was in der Gruppe
+	-Manuel: Wiese
+	-Romtham: Baum
+	-Vinzenz: Haus
+	-Lukas: Straße
+- Gibt es bereits ähnliche Addons / Technologien (auch andere Software)?
+   - Wie sind diese Umgesetzt (technisch und UX).
+   - Wollt ihr euch davon absetzen (kein muss)
