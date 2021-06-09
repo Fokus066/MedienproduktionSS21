@@ -1,3 +1,4 @@
+from os import name
 import bpy, typing 
 
 class house: 
@@ -26,23 +27,21 @@ class house:
 
         door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
     
-    def add_mirror(self) -> bpy.types.Material:
+    def add_glass(self) -> bpy.types.Material:
         #add material
-        mirror_mat: bpy.types.Material = bpy.data.materials.new("Water Material")
-        mirror_mat.use_nodes = True
+        glass_mat: bpy.types.Material = bpy.data.materials.new("Water Material")
+        glass_mat.use_nodes = True
 
-        bpy.data.materials["Material.004"].node_tree.nodes["Glass BSDF"].inputs[1].default_value = 0.5
-
-        nodes_water: typing.List[bpy.types.Node] = mirror_mat.node_tree.nodes
+        nodes_glass: typing.List[bpy.types.Node] = glass_mat.node_tree.nodes
        
-        nodes_water["Principled BSDF"].inputs[5].default_value = 1.0       
-        nodes_water["Principled BSDF"].inputs[7].default_value = 0.0
-        nodes_water["Principled BSDF"].inputs[15].default_value = 1.0
-        nodes_water.use_screen_refraction = True
+        nodes_glass["Principled BSDF"].inputs[5].default_value = 1.0       
+        nodes_glass["Principled BSDF"].inputs[7].default_value = 0.0
+        nodes_glass["Principled BSDF"].inputs[15].default_value = 1.0
+        #nodes_glass.use_screen_refraction = True
         bpy.context.scene.eevee.use_ssr = True
         bpy.context.scene.eevee.use_ssr_refraction = True
         
-        return mirror_mat
+        return glass_mat
 
     def generate_Window(self):
 
@@ -73,8 +72,11 @@ class house:
         windows.append(window6)
         windows.append(window7) 
 
-        ob = bpy.context.active_object
-        ob.data.materials.append(self.add_mirror())
+        windows
+        print(windows)
+
+        
+                    
     
 
 house= house()
