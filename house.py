@@ -15,15 +15,68 @@ class house:
     door_size_y = 2.5
     door_size_z = 4
 
+    def building_material(self) -> bpy.types.Material:
+
+        building_mat: bpy.types.Material = bpy.data.materials.new("Water Material")
+        building_mat.use_nodes = True
+
+        nodes_building: typing.List[bpy.types.Node] = building_mat.node_tree.nodes
+        node_musgrav: bpy.types.Node = nodes_building.new("ShaderNodeTexMusgrave")
+        node_texcoord: bpy.types.Node = nodes_building.new("ShaderNodeTexCoord")
+        node_bump: bpy.types.Node = nodes_building.new("ShaderNodeBump")
+        node_noise: bpy.types.Node = nodes_building.new("ShaderNodeTexNoise")
+        node_mix: bpy.types.Node = nodes_building.new("ShaderNodeMixRGB")
+        node_colorramp_1: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")
+        node_colorramp_2: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")        
+        node_mapping: bpy.types.Node = nodes_building.new("ShaderNodeMapping")
+
+        node_mix.blend_type = 'DIFFERENCE'
+        node_bump.inputs[0].default_value = 0.3
+        node_musgrav.inputs[3].default_value = 21.000
+        node_musgrav.inputs[3].default_value = 0
+        node_noise.inputs[2].default_value = 6.000
+        node_noise.inputs[3].default_value = 16.000
+        node_noise.inputs[4].default_value = 0.1
+        node_noise.inputs[5].default_value = 4.0
+        node_colorramp_1.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+        node_colorramp_1.color_ramp.elements[1].color =  (0.781435, 0.781435, 0.781435, 1)
+        
+        node_colorramp_2.color_ramp.elements[1].color = (0.875713, 0.875713, 0.875713, 1)
+        node_colorramp_2.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+        
+
+        building_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
+
+        building_mat.node_tree.links.new(node_mapping.outputs[0],node_musgrav.inputs[0])
+        building_mat.node_tree.links.new(node_mapping.outputs[0],node_noise.inputs[0])
+
+        building_mat.node_tree.links.new(node_musgrav.outputs[0],node_mix.inputs[1])
+
+        building_mat.node_tree.links.new(node_noise.outputs[0],node_colorramp_1.inputs[0])
+        building_mat.node_tree.links.new(node_colorramp_1.outputs[0], node_mix.inputs[2])
+
+        building_mat.node_tree.links.new( node_mix.outputs[0],node_colorramp_2.inputs[0])
+        building_mat.node_tree.links.new( node_mix.outputs[0],node_bump.inputs[2])
+
+        building_mat.node_tree.links.new( node_colorramp_2.outputs[0], nodes_building["Principled BSDF"].inputs[0])
+        building_mat.node_tree.links.new( node_bump.outputs[0], nodes_building["Principled BSDF"].inputs[20])
+
+        return building_mat
+        
+
     def generate_building(self):
 
         bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
 
         mainhouse = bpy.context.object
 
+        mainhouse.data.materials.append(self.building_material()) 
+
         bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(self.garageX*0.33, self.garageY ,self.garageZ * 0.5), scale=(self.garageX, self.garageY, self.garageZ))
 
         garage = bpy.context.object
+        garage.data.materials.append(self.building_material()) 
+
 
         door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
     
@@ -73,10 +126,7 @@ class house:
         windows.append(window7) 
 
         windows
-        print(windows)
-
-        
-                    
+        print(windows)            
     
 
 house= house()
