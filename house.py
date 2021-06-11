@@ -14,6 +14,17 @@ class house:
     door_size_x = 0.3
     door_size_y = 2.5
     door_size_z = 4
+    
+    patio_size_x = 0.3
+    patio_size_y = 3.5
+    patio_size_z = 4
+
+
+
+    garagedoor_size_x = 0.3
+    garagedoor_size_y = 4.5
+    garagedoor_size_z = 4
+   
 
     def building_material(self) -> bpy.types.Material:
 
@@ -79,6 +90,11 @@ class house:
 
 
         door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
+
+        patio1 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( self.housemainX *-0.5 , self.housemainY *0.33, self.patio_size_z*0.5))
+        patio2 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( self.housemainX *-0.25 , self.housemainY *0.5, self.patio_size_z*0.5))
+
+        garagedoor1 = bpy.ops.mesh.primitive_cube_add(scale=(self.garagedoor_size_x, self.garagedoor_size_y, self.garagedoor_size_z),location=( self.housemainX *0.5 , self.housemainY *1, self.garagedoor_size_z*0.5))
     
     def add_glass(self) -> bpy.types.Material:
         #add material
@@ -117,20 +133,49 @@ class house:
         window6 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.66))
         window7 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.66))
 
+
+        
+        # patiodoor_size_x = 2
+        # patiodoor_size_y = 0.5
+        # patiodoor_size_z = 2.5
+
+        # window8 = bpy.ops.mesh.primitive_cube_add(scale=( patiodoor_size_x,  patiodoor_size_y,  patiodoor_size_z),location=( self.housemainX*0.5, -self.housemainY*0.75, self.housemainZ*0.66))
+        # window9 = bpy.ops.mesh.primitive_cube_add(scale=( patiodoor_size_x,  patiodoor_size_y,  patiodoor_size_z),location=( self.housemainX*-0.5, -self.housemainY*0.75, self.housemainZ*0.66))
+
         windows.append(window1)
         windows.append(window2)
         windows.append(window3) 
         windows.append(window4)
         windows.append(window5)
         windows.append(window6)
-        windows.append(window7) 
+        windows.append(window7)
+        # windows.append(window8)
+        # windows.append(window9)
 
         windows
         print(windows)            
     
+    #  def generate_Garagedoor(self):
+
+    #     garagedoor_size_x = 0.3
+    #     garagedoor_size_y = 2.5
+    #     garagedoor_size_z = 4
+
+    #      garagedoorX = 9
+    #      garagedoorY = 15
+    #      garagedoorZ = 1
+    
+        
+    
+    #     garagedoor = []
+    #     garagedoor1 = bpy.ops.mesh.primitive_cube_add(scale=(garagedoor_size_x, garagedoor_size_y, garagedoor_size_z),location=( self.garageX*0.5 , self.garageY*0.25, self.garageZ*0.25))
+       
+    #     garagedoor.append(garagedoor1)
+    #     garagedoor
+    #     print(garagedoor) 
+               
 
 house= house()
 house.generate_building()
 house.generate_Window()
-
-    
+#house.generate_Garagedoor()
