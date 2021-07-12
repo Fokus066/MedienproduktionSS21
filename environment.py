@@ -66,8 +66,6 @@ class Environment_Operator(bpy.types.Operator):
             sun.data.color = (0.939978, 1, 0.355009)
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.243161, 0.887797, 1, 0.421429)
     
-
-
         if self.sunlight_enum == "OP2":           
             sun.data.energy = 1
             sun.data.color = (1, 1, 1)
