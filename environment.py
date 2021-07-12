@@ -54,14 +54,24 @@ class Environment_Operator(bpy.types.Operator):
         sun_data = bpy.data.lights.new('sun', type='SUN')
         sun = bpy.data.objects.new('sun', sun_data)
         sun.location = (5,-5,30)
-        bpy.context.collection.objects.link(sun)   
+        
+
+        bpy.context.collection.objects.link(sun) 
+
+        # changing these values does affect the render.
+        bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[1].default_value = 0.6 
       
         if self.sunlight_enum == "OP1":           
-            sun.data.energy = 2.50
+            sun.data.energy = 10
+            sun.data.color = (0.939978, 1, 0.355009)
+            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.243161, 0.887797, 1, 0.421429)
+    
+
 
         if self.sunlight_enum == "OP2":           
-            sun.data.energy = 100.00 
-
+            sun.data.energy = 1
+            sun.data.color = (1, 1, 1)
+            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.00824402, 0.0024832, 0.0331013, 0.421429)
 
     def add_water_color(self) -> bpy.types.Material:
         #add material
