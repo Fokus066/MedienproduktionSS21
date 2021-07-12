@@ -246,10 +246,7 @@ class Environment_Operator(bpy.types.Operator):
                 x = (random.random() * self.meadow_size) - self.meadow_size/2 + cursor[0] 
                 y = (random.random() * self.meadow_size) - self.meadow_size/2 + cursor[1] 
                 obj.location = (x, y, cursor[2])
-                print(x)
-                print(y)
-
-
+                
                 if self.materials:
                     obj.data.materials.append(trunk_material)            
             
