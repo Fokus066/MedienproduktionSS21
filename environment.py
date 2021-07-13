@@ -126,7 +126,7 @@ class Environment_Operator(bpy.types.Operator):
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
-        my_image_node.image = bpy.data.images["Base.png"]
+        my_image_node.image = bpy.data.images["street.png"]
         
         #linking the nodes
         links = new_mat.node_tree.links
@@ -158,7 +158,7 @@ class Environment_Operator(bpy.types.Operator):
 
         return material    
 
-    def generate_meadow(self):
+    def generate_meadow_house_side(self):
 
             # add plane
             bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0))
@@ -168,6 +168,33 @@ class Environment_Operator(bpy.types.Operator):
             #edit plane
             bpy.ops.object.editmode_toggle()
             bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+            bpy.ops.mesh.subdivide(number_cuts=7)
+            bpy.ops.object.editmode_toggle()
+
+
+            #particle system
+            ps = ob.modifiers.new("grasshair", 'PARTICLE_SYSTEM')
+
+            ptcsys = ob.particle_systems[ps.name]
+            ptcsys.settings.count = 15000 *self.meadow_size
+            ptcsys.settings.type = 'HAIR'
+            ptcsys.settings.hair_length = 0.3
+            ptcsys.settings.brownian_factor = 0.3
+            ptcsys.settings.hair_step = 1
+            
+            #add material to object
+            ob.data.materials.append(self.meadow_color()) 
+
+    def generate_meadow_barn_side(self):
+
+            # add plane
+            bpy.ops.mesh.primitive_plane_add(location=(0, -60, 0))
+
+            ob = bpy.context.active_object
+
+            #edit plane
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size+10,0))
             bpy.ops.mesh.subdivide(number_cuts=7)
             bpy.ops.object.editmode_toggle()
 
@@ -200,7 +227,10 @@ class Environment_Operator(bpy.types.Operator):
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
-        self.generate_meadow()
+        barn = Barn()
+        barn.generate_building()
+        self.generate_meadow_house_side()
+        self.generate_meadow_barn_side()
         self.light_setting()
         self.generate_Water()
         self.generate_Street()
@@ -306,7 +336,38 @@ class Environment_Operator(bpy.types.Operator):
         
         bpy.ops.object.select_all(action='DESELECT')
         
-        return {'FINISHED'}    
+        return {'FINISHED'}
+
+class Barn: 
+
+    barn_x = 15
+    barn_y = 25
+    barn_z = 10
+
+    roof_width_x = 13
+    roof_width_y = 25
+    roof_height_z = 8
+
+    inner_space_width_x = 13
+    inner_space_width_y = 27
+    inner_space_height_z = 8
+
+    def generate_building(self):
+
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.barn_z*0.5), scale=(self.barn_x, self.barn_y,self.barn_z))
+        mainhouse = bpy.context.object
+        #mainhouse.data.materials.append(self.building_material()) 
+
+        cube_mesh_roof = bpy.ops.mesh.primitive_cube_add(scale=(self.roof_width_x, self.roof_width_y, self.roof_height_z),location=( 0 , -55, self.barn_z))
+
+        cube_mesh_inner_space = bpy.ops.mesh.primitive_cube_add(scale=(self.inner_space_width_x, self.inner_space_width_y, self.inner_space_height_z),location=( 0 , -55, self.barn_z*0.5))
+
+        #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
+        #modifier_bool.object = cube_mesh_inner_space 
+
+bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
+bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
+bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.  
 
 classes = [Environment_Panel,Environment_Operator]
 
