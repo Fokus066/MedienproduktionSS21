@@ -123,7 +123,8 @@ class Environment_Operator(bpy.types.Operator):
         principled_node = nodes.get('Principled BSDF')
 
         #load image to node
-        bpy.ops.image.open(filepath="D:\\Studium\\5.Semester\\Datenverarbeitung\\Materials\\Base.png")
+        # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+        bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["Base.png"]
         
