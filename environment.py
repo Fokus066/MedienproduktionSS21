@@ -96,7 +96,7 @@ class Environment_Operator(bpy.types.Operator):
         
         return water_mat
     
-     def generate_Street(self):
+    def generate_Street(self):
         bpy.ops.mesh.primitive_plane_add()
         so = bpy.context.active_object
 
