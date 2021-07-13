@@ -126,7 +126,7 @@ class Environment_Operator(bpy.types.Operator):
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
-        my_image_node.image = bpy.data.images["Base.png"]
+        my_image_node.image = bpy.data.images["street.png"]
         
         #linking the nodes
         links = new_mat.node_tree.links
@@ -158,10 +158,37 @@ class Environment_Operator(bpy.types.Operator):
 
         return material    
 
-    def generate_meadow(self):
+    def generate_meadow_house_side(self):
 
             # add plane
             bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0))
+
+            ob = bpy.context.active_object
+
+            #edit plane
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+            bpy.ops.mesh.subdivide(number_cuts=7)
+            bpy.ops.object.editmode_toggle()
+
+
+            #particle system
+            ps = ob.modifiers.new("grasshair", 'PARTICLE_SYSTEM')
+
+            ptcsys = ob.particle_systems[ps.name]
+            ptcsys.settings.count = 15000 *self.meadow_size
+            ptcsys.settings.type = 'HAIR'
+            ptcsys.settings.hair_length = 0.3
+            ptcsys.settings.brownian_factor = 0.3
+            ptcsys.settings.hair_step = 1
+            
+            #add material to object
+            ob.data.materials.append(self.meadow_color()) 
+
+    def generate_meadow_barn_side(self):
+
+            # add plane
+            bpy.ops.mesh.primitive_plane_add(location=(0, -50, 0))
 
             ob = bpy.context.active_object
 
@@ -200,7 +227,8 @@ class Environment_Operator(bpy.types.Operator):
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
-        self.generate_meadow()
+        self.generate_meadow_house_side()
+        self.generate_meadow_barn_side()
         self.light_setting()
         self.generate_Water()
         self.generate_Street()
