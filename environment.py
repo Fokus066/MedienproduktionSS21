@@ -96,6 +96,43 @@ class Environment_Operator(bpy.types.Operator):
         
         return water_mat
     
+    def generate_Street(self):
+        bpy.ops.mesh.primitive_plane_add()
+        so = bpy.context.active_object
+
+        #move Object
+        #x
+        so.location[0] = 0
+        #y
+        so.location[1] = -25
+
+        #scale Object
+        #length
+        so.scale[0] = 20
+        #width
+        so.scale[1] = 5
+
+        #create the Material
+        new_mat = bpy.data.materials.new(name = "My Material")
+        so.data.materials.append(new_mat)
+
+        new_mat.use_nodes = True
+        nodes = new_mat.node_tree.nodes
+
+        #Operators
+        principled_node = nodes.get('Principled BSDF')
+
+        #load image to node
+        # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+        bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
+        my_image_node = nodes.new("ShaderNodeTexImage")
+        my_image_node.image = bpy.data.images["Base.png"]
+        
+        #linking the nodes
+        links = new_mat.node_tree.links
+        links.new(my_image_node.outputs[0], principled_node.inputs[0])
+        
+    
     def generate_Water(self):
 
         # add plane
@@ -166,6 +203,7 @@ class Environment_Operator(bpy.types.Operator):
         self.generate_meadow()
         self.light_setting()
         self.generate_Water()
+        self.generate_Street()
         
         # get window_manager context to make updating the progress indicator less code
         Window_Manager = bpy.context.window_manager
