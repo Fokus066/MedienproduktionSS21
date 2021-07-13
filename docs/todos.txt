@@ -2,16 +2,24 @@ Bis 22.07
 
 -	Laternen generieren an der Straße entlang (Licht)
 
--	Haus Mehrstöckig! Garage veränderbar
+- Gehweg (Fokus)
+
+-	Haus Mehrstöckig! Garage veränderbar (Vinzenz)
 
 -	Größe der Wiese nur in eine Richtung
 
--	Grundstück Gegenüber Wiese Scheune(optional)
+-	Grundstück Gegenüber Wiese Scheune(optional) (Manu)
 
--	Bäume entlang der Straße
+-	Bäume entlang der Straße (Fokus)
 
--	Haus Weg zur Straße Zaun drum
+- Sonnenrotation (Fokus)
 
--	Bäume werden nicht auf Gründstück platziert
+-	Haus Weg zur Straße Zaun drum (Vinzenz)
+
+-	Bäume werden nicht auf Gründstück platziert mit Weg (Manu)
 
 -	Wiese auf der Garage? (Optional)
+
+- Fluss orientiert sich an die Objektgröße
+
+- mehrere Häuser generieren? (optional)
