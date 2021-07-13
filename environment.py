@@ -188,13 +188,13 @@ class Environment_Operator(bpy.types.Operator):
     def generate_meadow_barn_side(self):
 
             # add plane
-            bpy.ops.mesh.primitive_plane_add(location=(0, -50, 0))
+            bpy.ops.mesh.primitive_plane_add(location=(0, -60, 0))
 
             ob = bpy.context.active_object
 
             #edit plane
             bpy.ops.object.editmode_toggle()
-            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size+10,0))
             bpy.ops.mesh.subdivide(number_cuts=7)
             bpy.ops.object.editmode_toggle()
 
@@ -227,6 +227,8 @@ class Environment_Operator(bpy.types.Operator):
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
+        barn = Barn()
+        barn.generate_building()
         self.generate_meadow_house_side()
         self.generate_meadow_barn_side()
         self.light_setting()
@@ -334,7 +336,38 @@ class Environment_Operator(bpy.types.Operator):
         
         bpy.ops.object.select_all(action='DESELECT')
         
-        return {'FINISHED'}    
+        return {'FINISHED'}
+
+class Barn: 
+
+    barn_x = 15
+    barn_y = 25
+    barn_z = 10
+
+    roof_width_x = 13
+    roof_width_y = 25
+    roof_height_z = 8
+
+    inner_space_width_x = 13
+    inner_space_width_y = 27
+    inner_space_height_z = 8
+
+    def generate_building(self):
+
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.barn_z*0.5), scale=(self.barn_x, self.barn_y,self.barn_z))
+        mainhouse = bpy.context.object
+        #mainhouse.data.materials.append(self.building_material()) 
+
+        cube_mesh_roof = bpy.ops.mesh.primitive_cube_add(scale=(self.roof_width_x, self.roof_width_y, self.roof_height_z),location=( 0 , -55, self.barn_z))
+
+        cube_mesh_inner_space = bpy.ops.mesh.primitive_cube_add(scale=(self.inner_space_width_x, self.inner_space_width_y, self.inner_space_height_z),location=( 0 , -55, self.barn_z*0.5))
+
+        #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
+        #modifier_bool.object = cube_mesh_inner_space 
+
+bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
+bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
+bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.  
 
 classes = [Environment_Panel,Environment_Operator]
 
