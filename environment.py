@@ -52,9 +52,7 @@ class Environment_Operator(bpy.types.Operator):
     def light_setting(self):
 
         sun_data = bpy.data.lights.new('sun', type='SUN')
-        sun = bpy.data.objects.new('sun', sun_data)
-        sun.location = (5,-5,30)
-        
+        sun = bpy.data.objects.new('sun', sun_data) 
 
         bpy.context.collection.objects.link(sun) 
 
@@ -63,12 +61,20 @@ class Environment_Operator(bpy.types.Operator):
       
         if self.sunlight_enum == "OP1":           
             sun.data.energy = 10
-            sun.data.color = (0.939978, 1, 0.355009)
+            sun.data.color = (0.939978, 1, 0.355009)      
+            sun.location = (-15,-70,45)        
+            sun.rotation_euler[0] = 0.872665
+            sun.rotation_euler[1] = -0.349066 
+            sun.rotation_euler[2] = -0.261799
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.243161, 0.887797, 1, 0.421429)
     
         if self.sunlight_enum == "OP2":           
             sun.data.energy = 1
             sun.data.color = (1, 1, 1)
+            sun.location = (-12,44,45)   
+            sun.rotation_euler[0] = -0.698132 
+            sun.rotation_euler[1] = -0.610865  
+            sun.rotation_euler[2] = -0.436332 
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.00824402, 0.0024832, 0.0331013, 0.421429)
 
     def add_water_color(self) -> bpy.types.Material:
@@ -124,7 +130,8 @@ class Environment_Operator(bpy.types.Operator):
 
         #load image to node
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
-        bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
+        # Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
+        bpy.ops.image.open(filepath="/Users/HFU/Documents/Furtwangen/Uni/Semester_5/Medienproduktion/img/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
         
