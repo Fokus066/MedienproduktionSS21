@@ -1,4 +1,6 @@
 import os, bpy, random, math, add_curve_sapling
+
+from bpy import context
 from bpy.props import *
 
 class Environment_Panel(bpy.types.Panel):
@@ -420,7 +422,9 @@ class Environment_Operator(bpy.types.Operator):
     def execute(self, context):
 
         barn = Barn()
+        fence = Fence()
         barn.generate_building()
+        fence.generate_fence()
         self.generate_meadow_house_side()
         self.generate_meadow_barn_side()
         self.generate_Water()
@@ -457,6 +461,57 @@ class Barn:
 
         #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
         #modifier_bool.object = cube_mesh_inner_space 
+
+class Fence: 
+
+    fence_x = 0.25
+    fence_y = -33
+    fence_z = 10
+
+    fence_scale_x = 40
+    fence_scale_y = 0.2
+    fence_scalet_z = 0.95
+
+    fence_vertical_z = 5
+
+    fence_vertical_scale_x = 0.8
+    fence_vertical_scale_y = 0.6
+    fence_vertical_scalet_z = 5
+
+    def add_fence_texture(self) -> bpy.types.Material:
+
+        #add material
+        fence_mat: bpy.types.Material = bpy.data.materials.new("fence material")
+        fence_mat.use_nodes = True
+
+        nodes_fence: typing.List[bpy.types.Node] = fence_mat.node_tree.nodes
+        node_musgrave: bpy.types.Node = nodes_fence.new("ShaderNodeTexMusgrave")
+        node_texvoronoi: bpy.types.Node = nodes_fence.new("ShaderNodeTexVoronoi")
+        node_texnoise: bpy.types.Node = nodes_fence.new("ShaderNodeTexNoise")
+
+               
+        fence_mat.node_tree.links.new(node_musgrave.outputs[0], node_texvoronoi.inputs[0])
+        fence_mat.node_tree.links.new(node_texvoronoi.outputs[0], nodes_fence["Principled BSDF"].inputs[4])
+        fence_mat.node_tree.links.new(node_texnoise.outputs[0], nodes_fence["Material Output"].inputs[2])
+        
+        return fence_mat
+
+    def generate_fence(self):
+
+        fence1 = bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.4), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
+        fence2 = bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.25), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
+
+        fence_vertical_1= bpy.ops.mesh.primitive_cube_add(location=(-20, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+        fence_vertical_2= bpy.ops.mesh.primitive_cube_add(location=(-10, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+        fence_vertical_3= bpy.ops.mesh.primitive_cube_add(location=(-0, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+        fence_vertical_4= bpy.ops.mesh.primitive_cube_add(location=(10, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+        fence_vertical_5= bpy.ops.mesh.primitive_cube_add(location=(20, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+        
+        fences = [fence1,fence2]
+
+        fences_vertical = [fence_vertical_1,fence_vertical_2, fence_vertical_3, fence_vertical_4, fence_vertical_5]
+
+       
 
 classes = [Environment_Panel,Environment_Operator, Delete_Scene]
 
