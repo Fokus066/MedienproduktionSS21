@@ -11,6 +11,20 @@ class Environment_Panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator("wm.environment_operator")
+        layout.operator("wm.delete_scene")
+
+class Delete_Scene(bpy.types.Operator):
+    bl_label = "Delete scene"
+    bl_idname = "wm.delete_scene"
+
+    def execute(self, context):
+
+        bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
+        bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
+        bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.
+        bpy.ops.object.select_all(action='DESELECT')
+        
+        return {'FINISHED'}
  
 class Environment_Operator(bpy.types.Operator):
     bl_label = "Environment Operator"
@@ -143,7 +157,6 @@ class Environment_Operator(bpy.types.Operator):
 
         # add plane
         bpy.ops.mesh.primitive_plane_add(location=(0, -self.meadow_size - 11.5, 0))
-       
 
         ob = bpy.context.active_object
 
@@ -151,11 +164,8 @@ class Environment_Operator(bpy.types.Operator):
         bpy.ops.object.editmode_toggle()
         bpy.ops.transform.resize(value=(self.meadow_size,1.5,1))
         bpy.ops.object.editmode_toggle()
-
                
-        ob.data.materials.append(self.add_pavement_texture()) 
-
-        
+        ob.data.materials.append(self.add_pavement_texture())        
 
     def add_pavement_texture(self) -> bpy.types.Material:
 
@@ -190,8 +200,7 @@ class Environment_Operator(bpy.types.Operator):
         pavement_mat.node_tree.links.new(node_texbrick.outputs[0], nodes_pavement["Principled BSDF"].inputs[0])
         
         return pavement_mat
-        
-    
+            
     def generate_Water(self):
 
         # add plane
@@ -369,7 +378,7 @@ class Environment_Operator(bpy.types.Operator):
         newobjects = [object for object in objects_next if object not in objects_before]
         
         # "distance" will be relative 
-        distance = math.sqrt(random.randint(1, 100))*(random.randint(1,3)*self.tree_number)/self.distance
+        distance = self.distance
 
         # also prepare a list of potentially joined meshes
         for obj in newobjects:
@@ -380,11 +389,21 @@ class Environment_Operator(bpy.types.Operator):
             # process trunks
             if obj.type == 'CURVE':
 
+                #for i in random_number:
+                    #print(random_number[i])
                 cursor = bpy.context.scene.cursor.location
+
+                #x = -self.meadow_size - (self.meadow_size * 0.8)
+                
                 x = (random.random() * self.meadow_size) - self.meadow_size/2 + cursor[0] 
                 y = (random.random() * self.meadow_size) - self.meadow_size/2 + cursor[0] 
                 
-                obj.location = (x, y, cursor[2])
+                for index in range(0, self.tree_number): 
+
+                    distance += math.sin(1)  
+                                             
+                    obj.location = (x, y, cursor[2])
+                    
                 
                 if self.materials:
                     obj.data.materials.append(trunk_material)            
@@ -436,11 +455,7 @@ class Barn:
         #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
         #modifier_bool.object = cube_mesh_inner_space 
 
-bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
-bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
-bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.  
-
-classes = [Environment_Panel,Environment_Operator]
+classes = [Environment_Panel,Environment_Operator, Delete_Scene]
 
 def register():
     for cls in classes:
