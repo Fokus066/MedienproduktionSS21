@@ -200,7 +200,8 @@ class Environment_Operator(bpy.types.Operator):
         pavement_mat.node_tree.links.new(node_texbrick.outputs[0], nodes_pavement["Principled BSDF"].inputs[0])
         
         return pavement_mat
-            
+        
+    
     def generate_Water(self):
 
         # add plane
@@ -291,20 +292,10 @@ class Environment_Operator(bpy.types.Operator):
         self.distance = 2.0
         self.create_collection = True
         return context.window_manager.invoke_props_dialog(self)
-    
-    # Run the actual code upon pressing "OK" on the dialog
-    def execute(self, context):
 
-        barn = Barn()
-        barn.generate_building()
-        self.generate_meadow_house_side()
-        self.generate_meadow_barn_side()
-        self.generate_Water()
-        self.generate_Street()
-        self.light_setting()
-        self.generate_pavement()
-        
-        # get window_manager context to make updating the progress indicator less code
+    def generate_trees(self):
+
+         # get window_manager context to make updating the progress indicator less code
         Window_Manager = bpy.context.window_manager
         
         # get list of current objects
@@ -313,14 +304,18 @@ class Environment_Operator(bpy.types.Operator):
         # start progress indicator
         Window_Manager.progress_begin(0, self.tree_number)
 
-        random_number = []
+        random_branches = []
+        random_location  = []
+
+        distance = self.distance
 
         for num in range(self.tree_number):
             num = random.randint(1,3)
-            random_number.append(num)
-        
-        for i in random_number:
-            print(random_number[i])
+            random_branches.append(num)
+            
+        for num in range(self.tree_number):
+            num = random.randrange(-self.meadow_size, self.meadow_size, distance) 
+            random_location.append(num)
 
         # generate a number of trees
         for index in range(0, self.tree_number):            
@@ -331,7 +326,7 @@ class Environment_Operator(bpy.types.Operator):
             
             # have to override the preset values after reading them
             #if add_curve_sapling.settings["levels"] > self.max_branch_levels:
-            add_curve_sapling.settings["levels"] =  random_number[index]
+            add_curve_sapling.settings["levels"] =  random_branches[index]
             add_curve_sapling.settings["limitImport"] = False
             add_curve_sapling.settings["do_update"] = True
             add_curve_sapling.settings["bevel"] = True
@@ -375,10 +370,7 @@ class Environment_Operator(bpy.types.Operator):
         
         # make object list after generating
         objects_next = bpy.data.objects.values()
-        newobjects = [object for object in objects_next if object not in objects_before]
-        
-        # "distance" will be relative 
-        distance = self.distance
+        newobjects = [object for object in objects_next if object not in objects_before]     
 
         # also prepare a list of potentially joined meshes
         for obj in newobjects:
@@ -423,8 +415,19 @@ class Environment_Operator(bpy.types.Operator):
                 newcol.objects.link(objref)
                 # remove object from scene collection
                 bpy.context.scene.collection.objects.unlink(objref)
-        
-        bpy.ops.object.select_all(action='DESELECT')
+    
+    # Run the actual code upon pressing "OK" on the dialog
+    def execute(self, context):
+
+        barn = Barn()
+        barn.generate_building()
+        self.generate_meadow_house_side()
+        self.generate_meadow_barn_side()
+        self.generate_Water()
+        self.generate_Street()
+        self.light_setting()
+        self.generate_pavement()
+        self.generate_trees()  
         
         return {'FINISHED'}
 
