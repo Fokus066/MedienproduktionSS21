@@ -32,8 +32,22 @@ class Environment_Operator(bpy.types.Operator):
     bl_label = "Environment Operator"
     bl_idname = "wm.environment_operator"
 
-    materials= True
-    
+    fence_x = 0.25
+    fence_y = -33
+    fence_z = 10
+
+    fence_scale_x = 40
+    fence_scale_y = 0.2
+    fence_scalet_z = 0.95
+
+    fence_vertical_z = 5
+
+    fence_vertical_scale_x = 0.8
+    fence_vertical_scale_y = 0.6
+    fence_vertical_scalet_z = 5
+
+    materials = True
+
     # Fix missing "bend" property in Sapling, which would otherwise prevent
     # execution of tree_add()
     add_curve_sapling.AddTree.bend = 0.0
@@ -63,6 +77,9 @@ class Environment_Operator(bpy.types.Operator):
     # leaf shape enum copied directly from Sapling.
     leaf_shape: EnumProperty(name="Leaf Shape", items=(('hex', 'Hexagonal', '0'), ('rect', 'Rectangular', '1'), ('dFace', 'DupliFaces', '2'), ('dVert', 'DupliVerts', '3')), default='rect')
     show_leaves: BoolProperty(name="Show Leaves", description="Generate leaves for all generated Saplings", default=True)
+
+    # Generate collection of trees
+    create_collection: BoolProperty(name="Create Collection", description="Create a new Collection for the new randomized objects", default=True)  
 
     def light_setting(self):
 
@@ -119,23 +136,18 @@ class Environment_Operator(bpy.types.Operator):
     
     def generate_Street(self):
         bpy.ops.mesh.primitive_plane_add()
-        so = bpy.context.active_object
+        street = bpy.context.active_object
+        street.name = "street"
 
         #move Object
-        #x
-        so.location[0] = 0
-        #y
-        so.location[1] = -25
+        street.location = (0, -25,0)
 
-        #scale Object
         #length
-        so.scale[0] = 20
-        #width
-        so.scale[1] = 5
+        street.scale = (20, 5, 0)
 
         #create the Material
         new_mat = bpy.data.materials.new(name = "My Material")
-        so.data.materials.append(new_mat)
+        street.data.materials.append(new_mat)
 
         new_mat.use_nodes = True
         nodes = new_mat.node_tree.nodes
@@ -159,7 +171,7 @@ class Environment_Operator(bpy.types.Operator):
         # add plane
         bpy.ops.mesh.primitive_plane_add(location=(0, -self.meadow_size - 11.5, 0))
         
-        ob = bpy.context.active_object
+        pavement = bpy.context.active_object
 
         #edit plane
         bpy.ops.object.editmode_toggle()
@@ -167,7 +179,7 @@ class Environment_Operator(bpy.types.Operator):
         bpy.ops.mesh.subdivide(number_cuts=100, fractal=0.03, fractal_along_normal=1, seed=0)
         bpy.ops.object.editmode_toggle()
                
-        ob.data.materials.append(self.add_pavement_texture())        
+        pavement.data.materials.append(self.add_pavement_texture())        
 
     def add_pavement_texture(self) -> bpy.types.Material:
 
@@ -201,15 +213,14 @@ class Environment_Operator(bpy.types.Operator):
         pavement_mat.node_tree.links.new(node_texchecker2.outputs[1], nodes_pavement["Principled BSDF"].inputs[4])
         pavement_mat.node_tree.links.new(node_texbrick.outputs[0], nodes_pavement["Principled BSDF"].inputs[0])
         
-        return pavement_mat
-        
+        return pavement_mat        
     
     def generate_Water(self):
 
         # add plane
         bpy.ops.mesh.primitive_plane_add(location=(0, self.meadow_size + 4, 0))
 
-        ob = bpy.context.active_object
+        water = bpy.context.active_object
 
         #edit plane
         bpy.ops.object.editmode_toggle()
@@ -217,7 +228,7 @@ class Environment_Operator(bpy.types.Operator):
         #bpy.ops.mesh.subdivide(number_cuts=7)
         bpy.ops.object.editmode_toggle()
         
-        ob.data.materials.append(self.add_water_color()) 
+        water.data.materials.append(self.add_water_color()) 
 
     def meadow_color(self )-> bpy.types.Material:        
 
@@ -229,61 +240,38 @@ class Environment_Operator(bpy.types.Operator):
 
         return material    
 
-    def generate_meadow_house_side(self):
+    def generate_meadow(self):
 
-            # add plane
-            bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0))
+        # add plane
+        bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0),scale=(self.meadow_size,self.meadow_size,0))
+        meadow = bpy.context.active_object
 
-            ob = bpy.context.active_object
+        #edit plane
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+        bpy.ops.object.editmode_toggle()
 
-            #edit plane
-            bpy.ops.object.editmode_toggle()
-            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
-            #bpy.ops.mesh.subdivide(number_cuts=100, fractal=0.03, fractal_along_normal=1, seed=0)
-            bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.primitive_plane_add(location=(0, -53, 0),scale=(self.meadow_size,self.meadow_size,0))
+        meadow_barn_side = bpy.context.active_object
 
-            #particle system
-            ps = ob.modifiers.new("grasshair", 'PARTICLE_SYSTEM')
+        #edit plane
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+        bpy.ops.object.editmode_toggle()
 
-            ptcsys = ob.particle_systems[ps.name]
+        meadow_all = [meadow,meadow_barn_side]        
+
+        for i in range(len(meadow_all)):
+
+            ps = meadow_all[i].modifiers.new("grasshair", 'PARTICLE_SYSTEM')
+            ptcsys = meadow_all[i].particle_systems[ps.name]
             ptcsys.settings.count = 15000 *self.meadow_size
             ptcsys.settings.type = 'HAIR'
             ptcsys.settings.hair_length = 0.3
             ptcsys.settings.brownian_factor = 0.3
             ptcsys.settings.hair_step = 1
-            
-            #add material to object
-            ob.data.materials.append(self.meadow_color()) 
 
-    def generate_meadow_barn_side(self):
-
-            # add plane
-            bpy.ops.mesh.primitive_plane_add(location=(0, -63, 0))
-
-            ob = bpy.context.active_object
-
-            #edit plane
-            bpy.ops.object.editmode_toggle()
-            bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size+10,0))
-            #bpy.ops.mesh.subdivide(number_cuts=100, fractal=0.03, fractal_along_normal=1, seed=0)
-            bpy.ops.object.editmode_toggle()
-
-
-            #particle system
-            ps = ob.modifiers.new("grasshair", 'PARTICLE_SYSTEM')
-
-            ptcsys = ob.particle_systems[ps.name]
-            ptcsys.settings.count = 15000 *self.meadow_size
-            ptcsys.settings.type = 'HAIR'
-            ptcsys.settings.hair_length = 0.3
-            ptcsys.settings.brownian_factor = 0.3
-            ptcsys.settings.hair_step = 1
-            
-            #add material to object
-            ob.data.materials.append(self.meadow_color()) 
-
-    # Generate collection of trees
-    create_collection: BoolProperty(name="Create Collection", description="Create a new Collection for the new randomized objects", default=True)   
+            meadow_all[i].data.materials.append(self.meadow_color()) 
 
     # set some defaults before popping up the dialog, then pop up the dialog
     def invoke(self, context, event):
@@ -343,10 +331,9 @@ class Environment_Operator(bpy.types.Operator):
         stone_mat.node_tree.links.new( node_bump.outputs[0], nodes_stone["Principled BSDF"].inputs[20])
 
         return stone_mat
-
-
-# set some defaults before popping up the dialog, then pop up the dialog
+    
     def generate_stones(self):
+
        # get window_manager context to make updating the progress indicator less code
         Window_Manager = bpy.context.window_manager
                 
@@ -552,67 +539,6 @@ class Environment_Operator(bpy.types.Operator):
                 newcol.objects.link(objref)
                 # remove object from scene collection
                 bpy.context.scene.collection.objects.unlink(objref)
-    
-    # Run the actual code upon pressing "OK" on the dialog
-    def execute(self, context):
-
-        barn = Barn()
-        fence = Fence()
-        barn.generate_building()
-        fence.generate_fence()
-        self.generate_meadow_house_side()
-        self.generate_meadow_barn_side()
-        self.generate_Water()
-        self.generate_Street()
-        self.light_setting()
-        self.generate_pavement()
-        self.generate_trees()  
-        self.generate_stones()
-        
-        return {'FINISHED'}
-
-class Barn: 
-
-    barn_x = 15
-    barn_y = 25
-    barn_z = 10
-
-    roof_width_x = 13
-    roof_width_y = 25
-    roof_height_z = 8
-
-    inner_space_width_x = 13
-    inner_space_width_y = 27
-    inner_space_height_z = 8
-
-    def generate_building(self):
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.barn_z*0.5), scale=(self.barn_x, self.barn_y,self.barn_z))
-        mainhouse = bpy.context.object
-        #mainhouse.data.materials.append(self.building_material()) 
-
-        cube_mesh_roof = bpy.ops.mesh.primitive_cube_add(scale=(self.roof_width_x, self.roof_width_y, self.roof_height_z),location=( 0 , -55, self.barn_z))
-
-        cube_mesh_inner_space = bpy.ops.mesh.primitive_cube_add(scale=(self.inner_space_width_x, self.inner_space_width_y, self.inner_space_height_z),location=( 0 , -55, self.barn_z*0.5))
-
-        #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
-        #modifier_bool.object = cube_mesh_inner_space 
-
-class Fence: 
-
-    fence_x = 0.25
-    fence_y = -33
-    fence_z = 10
-
-    fence_scale_x = 40
-    fence_scale_y = 0.2
-    fence_scalet_z = 0.95
-
-    fence_vertical_z = 5
-
-    fence_vertical_scale_x = 0.8
-    fence_vertical_scale_y = 0.6
-    fence_vertical_scalet_z = 5
 
     def add_fence_texture_vertical(self) -> bpy.types.Material:
 
@@ -662,10 +588,10 @@ class Fence:
     def generate_fence(self):
 
         bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.4), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
-        fence1 = bpy.context.active_object        
+        fence1 = bpy.context.active_object  
 
         bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.25), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
-        fence2 = bpy.context.active_object        
+        fence2 = bpy.context.active_object  
 
         bpy.ops.mesh.primitive_cube_add(location=(-20, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
         fence_vertical_1= bpy.context.active_object        
@@ -691,6 +617,49 @@ class Fence:
         
         for i in range(len(fences_horinzontal)):
             fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())      
+    
+    # Run the actual code upon pressing "OK" on the dialog
+    def execute(self, context):
+
+        barn = Barn()
+        barn.generate_building()
+        self.generate_fence()
+        self.generate_meadow()
+        self.generate_Water()
+        self.generate_Street()
+        self.light_setting()
+        self.generate_pavement()
+        self.generate_trees()  
+        self.generate_stones()
+        
+        return {'FINISHED'}
+
+class Barn: 
+
+    barn_x = 15
+    barn_y = 25
+    barn_z = 10
+
+    roof_width_x = 13
+    roof_width_y = 25
+    roof_height_z = 8
+
+    inner_space_width_x = 13
+    inner_space_width_y = 27
+    inner_space_height_z = 8
+
+    def generate_building(self):
+
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.barn_z*0.5), scale=(self.barn_x, self.barn_y,self.barn_z))
+        mainhouse = bpy.context.object
+        #mainhouse.data.materials.append(self.building_material()) 
+
+        cube_mesh_roof = bpy.ops.mesh.primitive_cube_add(scale=(self.roof_width_x, self.roof_width_y, self.roof_height_z),location=( 0 , -55, self.barn_z))
+
+        cube_mesh_inner_space = bpy.ops.mesh.primitive_cube_add(scale=(self.inner_space_width_x, self.inner_space_width_y, self.inner_space_height_z),location=( 0 , -55, self.barn_z*0.5))
+
+        #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
+        #modifier_bool.object = cube_mesh_inner_space 
 
 classes = [Environment_Panel,Environment_Operator, Delete_Scene]
 
