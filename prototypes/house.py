@@ -84,7 +84,16 @@ class house:
     def generate_building(self):
 
         bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
+         #extrudien
+        bpy.ops.object.mode_set( mode   = 'EDIT'   )
+        bpy.ops.mesh.select_mode( type  = 'FACE'   )
+        bpy.ops.mesh.select_all( action = 'SELECT' )
 
+        bpy.ops.mesh.extrude_region_move(
+        TRANSFORM_OT_translate={"value":(0, 0, 8)})
+
+        bpy.ops.object.mode_set( mode = 'OBJECT' )
+        mainhouse = bpy.context.object
         mainhouse = bpy.context.object
 
         mainhouse.data.materials.append(self.building_material()) 
