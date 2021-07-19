@@ -95,7 +95,7 @@ class house:
         bpy.ops.object.mode_set( mode = 'OBJECT' )
         mainhouse = bpy.context.object
         mainhouse = bpy.context.object
-
+        # extrudieren Face skalieren (ops transforn resize auf einer achse) 
         mainhouse.data.materials.append(self.building_material()) 
 
         bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(self.garageX*0.33, self.garageY ,self.garageZ * 0.5), scale=(self.garageX, self.garageY, self.garageZ))
