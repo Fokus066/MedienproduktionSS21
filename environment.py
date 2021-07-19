@@ -579,7 +579,7 @@ class Environment_Operator(bpy.types.Operator):
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
-        #barn = Barn()
+        barn = Barn()
         barn.generate_building()
         self.generate_fence()
         self.generate_meadow()
