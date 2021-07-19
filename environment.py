@@ -580,13 +580,13 @@ class Environment_Operator(bpy.types.Operator):
     def execute(self, context):
 
         #barn = Barn()
-        #barn.generate_building()
+        barn.generate_building()
         self.generate_fence()
-        #self.generate_meadow()
-        #self.generate_Water()
-        #self.generate_Street()
-        #self.light_setting()
-        #self.generate_pavement()
+        self.generate_meadow()
+        self.generate_Water()
+        self.generate_Street()
+        self.light_setting()
+        self.generate_pavement()
         self.generate_trees()  
         self.generate_stones()
         
