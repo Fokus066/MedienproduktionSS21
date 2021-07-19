@@ -95,18 +95,14 @@ class Environment_Operator(bpy.types.Operator):
             sun.data.energy = 10
             sun.data.color = (0.939978, 1, 0.355009)      
             sun.location = (-15,-70,45)        
-            sun.rotation_euler[0] = 0.872665
-            sun.rotation_euler[1] = -0.349066 
-            sun.rotation_euler[2] = -0.261799
+            sun.rotation_euler = (0.872665, -0.349066 ,-0.261799)
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.243161, 0.887797, 1, 0.421429)
     
         if self.sunlight_enum == "OP2":           
             sun.data.energy = 1
             sun.data.color = (1, 1, 1)
             sun.location = (-12,44,45)   
-            sun.rotation_euler[0] = -0.698132 
-            sun.rotation_euler[1] = -0.610865  
-            sun.rotation_euler[2] = -0.436332 
+            sun.rotation_euler = (-0.698132 , -0.610865 ,-0.436332 )
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.00824402, 0.0024832, 0.0331013, 0.421429)
 
     def add_water_color(self) -> bpy.types.Material:
@@ -343,29 +339,23 @@ class Environment_Operator(bpy.types.Operator):
         # start progress indicator
         Window_Manager.progress_begin(0,10)
 
-        random_float =[]
-
-        for num in range(self.stones_number):
-            num = round(random.uniform(0.77, 1.3))
-            random_float.append(num)
-
         for index in range(0, self.stones_number):          
                             
             # run the actual tree generating code
             bpy.ops.mesh.primitive_cube_add()
             
             stone = bpy.context.object
-            stone.name = "stone "
+            stone.name = "stone"
 
             stone_subsurf = stone.modifiers.new("stone structure", "SUBSURF")
-            stone_subsurf.levels = 3
+            stone_subsurf.levels = 4
 
             bpy.ops.object.modifier_add(type='DISPLACE')
 
             # Generate the texture and set the attributes
             voronoi_tex = bpy.data.textures.new("displace_voronoi", 'VORONOI')
             voronoi_tex.noise_intensity = .67
-            voronoi_tex.noise_scale = random_float[index]
+            voronoi_tex.noise_scale = round(random.uniform(0.77, 1.3))
             voronoi_tex.contrast = .22
 
             # Displacement modifier
@@ -426,28 +416,6 @@ class Environment_Operator(bpy.types.Operator):
         # start progress indicator
         Window_Manager.progress_begin(0, self.tree_number)
 
-        random_branches = []
-        random_leaves  = []
-        random_integer  = []
-        random_float =[ ]
-
-        for num in range(self.tree_number):
-            num = round(random.uniform(0.1, 10.00), 2)
-            random_float.append(num)
-
-        for num in range(self.tree_number):
-            num = random.randint(1,50)
-            random_integer.append(num)
-
-        for num in range(self.tree_number):
-            num = random.randint(7,10)
-            random_branches.append(num)
-            
-        for num in range(self.tree_number):
-            num = random.randrange(250, 500) 
-            random_leaves.append(num)
-        
-
         # generate a number of trees
         for index in range(0, self.tree_number):            
                         
@@ -458,9 +426,9 @@ class Environment_Operator(bpy.types.Operator):
             # have to override the preset values after reading them
             if add_curve_sapling.settings["levels"] > self.max_branch_levels:
                 add_curve_sapling.settings["levels"] =  self.max_branch_levels
-            add_curve_sapling.settings["branchDist"] = random_float[index]
-            add_curve_sapling.settings["nrings"] = random_integer[index]
-            add_curve_sapling.settings["seed"] = random_integer[index]
+            add_curve_sapling.settings["branchDist"] = round(random.uniform(0.1, 10.00), 2)
+            add_curve_sapling.settings["nrings"] = random.randint(7,10)
+            add_curve_sapling.settings["seed"] = random.randint(7,10)
             add_curve_sapling.settings["limitImport"] = False
             add_curve_sapling.settings["do_update"] = True
             add_curve_sapling.settings["bevel"] = True
@@ -468,8 +436,8 @@ class Environment_Operator(bpy.types.Operator):
             add_curve_sapling.settings["showLeaves"] = self.show_leaves
             add_curve_sapling.settings["leafShape"] = self.leaf_shape
             add_curve_sapling.settings["useArm"] = False
-            add_curve_sapling.settings["leaves"]  = random_leaves[index] 
-            add_curve_sapling.settings["scale"]  = random_branches[index]           
+            add_curve_sapling.settings["leaves"]  = random.randrange(250, 500) 
+            add_curve_sapling.settings["scale"]  = random.randint(5,10)         
             # run the actual tree generating code
             obj = bpy.ops.curve.tree_add(
                 limitImport=False,
@@ -587,48 +555,38 @@ class Environment_Operator(bpy.types.Operator):
 
     def generate_fence(self):
 
-        bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.4), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
-        fence1 = bpy.context.active_object  
+        fences_horinzontal = []
 
-        bpy.ops.mesh.primitive_cube_add(location=(0, -33,  self.fence_z*0.25), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
-        fence2 = bpy.context.active_object  
+        fences_vertical = []
 
-        bpy.ops.mesh.primitive_cube_add(location=(-20, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
-        fence_vertical_1= bpy.context.active_object        
-
-        bpy.ops.mesh.primitive_cube_add(location=(-10, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
-        fence_vertical_2 = bpy.context.active_object        
-
-        bpy.ops.mesh.primitive_cube_add(location=(-0, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
-        fence_vertical_3 = bpy.context.active_object        
-
-        bpy.ops.mesh.primitive_cube_add(location=(10, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
-        fence_vertical_4 = bpy.context.active_object        
-
-        bpy.ops.mesh.primitive_cube_add(location=(20, -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
-        fence_vertical_5 = bpy.context.active_object      
-
-        fences_horinzontal = [fence1,fence2]
-
-        fences_vertical = [fence_vertical_1,fence_vertical_2, fence_vertical_3, fence_vertical_4, fence_vertical_5]
-
-        for i in range(len(fences_vertical)):
+        for i in range(round((self.meadow_size/2)-1)):
+            bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size + (i * 5), -33, self.fence_vertical_z*0.5), scale=(self.fence_vertical_scale_x, self.fence_vertical_scale_y, self.fence_vertical_scalet_z))
+            fence= bpy.context.active_object 
+            fence.name = "fence_vertical".format(i) 
+            fences_vertical.append(fence)
             fences_vertical[i].data.materials.append(self.add_fence_texture_vertical())
-        
-        for i in range(len(fences_horinzontal)):
-            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())      
+
+            
+        for i in range(2):
+            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (self.fence_z/2.5) - (2 * i)), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
+            fence= bpy.context.active_object
+            fence.name = "fence_horinzontal".format(i)  
+            fences_horinzontal.append(fence)
+            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())         
+
+          
     
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
-        barn = Barn()
-        barn.generate_building()
+        #barn = Barn()
+        #barn.generate_building()
         self.generate_fence()
-        self.generate_meadow()
-        self.generate_Water()
-        self.generate_Street()
-        self.light_setting()
-        self.generate_pavement()
+        #self.generate_meadow()
+        #self.generate_Water()
+        #self.generate_Street()
+        #self.light_setting()
+        #self.generate_pavement()
         self.generate_trees()  
         self.generate_stones()
         
