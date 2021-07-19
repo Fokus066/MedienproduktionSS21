@@ -151,9 +151,10 @@ class Environment_Operator(bpy.types.Operator):
         #Operators
         principled_node = nodes.get('Principled BSDF')
 
+
         #load image to node
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
-        # Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
+        #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
         bpy.ops.image.open(filepath="/Users/HFU/Documents/Furtwangen/Uni/Semester_5/Medienproduktion/img/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
