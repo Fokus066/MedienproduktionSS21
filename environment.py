@@ -279,6 +279,43 @@ class Environment_Operator(bpy.types.Operator):
 
         return context.window_manager.invoke_props_dialog(self)
 
+    def generate_lantern(self):
+
+        #create Material
+        new_mat = bpy.data.materials.new(name = "My Material")
+        black_mat = bpy.data.materials.new(name="Black")
+        black_mat.diffuse_color=(0,0,0,1)
+    
+        new_mat.use_nodes = True
+        nodes = new_mat.node_tree.nodes
+        material_output = nodes.get("Material Output")
+        node_emission = nodes.new(type='ShaderNodeEmission')
+
+        #glow effect
+        node_emission.inputs[0].default_value = (0.0, 0.1, 1.0, 1 )#colour
+        node_emission.inputs[1].default_value = 500.0 #strength
+
+        links= new_mat.node_tree.links
+        links.new(node_emission.outputs[0], material_output.inputs[0])
+
+        lantern_array = []
+        lantern_lights =[]
+
+        for i in range(round((self.meadow_size/2)-1)):
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 5), scale=( 0.5, 0.5, 5))
+            lantern= bpy.context.active_object 
+            lantern.name='lantern'.format(i) 
+            lantern_array.append(lantern)
+            lantern_array[i].data.materials.append(black_mat)
+
+        for i in range(round((self.meadow_size/2)-1)):
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 7.8112), scale=(0.5, 0.5, 0.7))
+            lantern_light= bpy.context.active_object 
+            lantern_light.name='lantern'.format(i) 
+            lantern_lights.append(lantern_light)
+            lantern_lights[i].data.materials.append(new_mat)            
+
+
     def stone_material(self) -> bpy.types.Material:
 
         stone_mat: bpy.types.Material = bpy.data.materials.new("stones texture")
@@ -573,23 +610,24 @@ class Environment_Operator(bpy.types.Operator):
             fence= bpy.context.active_object
             fence.name = "fence_horinzontal".format(i)  
             fences_horinzontal.append(fence)
-            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())         
+            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())       
 
           
     
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
-        barn = Barn()
-        barn.generate_building()
-        self.generate_fence()
-        self.generate_meadow()
-        self.generate_Water()
-        self.generate_Street()
-        self.light_setting()
-        self.generate_pavement()
-        self.generate_trees()  
-        self.generate_stones()
+        #barn = Barn()
+        #barn.generate_building()
+        #self.generate_fence()
+        #self.generate_meadow()
+        #self.generate_Water()
+        #self.generate_Street()
+        #self.light_setting()
+        #self.generate_pavement()
+        #self.generate_trees()  
+        #self.generate_stones()
+        self.generate_lantern()
         
         return {'FINISHED'}
 
