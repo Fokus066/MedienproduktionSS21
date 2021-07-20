@@ -2,13 +2,7 @@ Bis 22.07
 
 - Haus Mehrstöckig! Garage veränderbar (Vinzenz)
 
-- Größe der Wiese nur in eine Richtung
-
 - Haus Weg zur Straße Zaun drum (Vinzenz)
-
-- Wiese auf der Garage? (Optional)
-
-- Fluss orientiert sich an die Objektgröße
 
 - mehrere Häuser generieren? (optional)
 
