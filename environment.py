@@ -209,7 +209,7 @@ class Environment_Operator(bpy.types.Operator):
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
         base_path = os.getcwd()
-        bpy.ops.image.open(filepath="base_path")
+        bpy.ops.image.open(filepath=base_path)
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
         
@@ -462,8 +462,7 @@ class Environment_Operator(bpy.types.Operator):
     
         class house: 
 
-
-        number_of_floors = 2
+            number_of_floors = 2
 
             groundX = 40
             groundY= 40
