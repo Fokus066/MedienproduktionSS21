@@ -80,7 +80,7 @@ class Environment_Operator(bpy.types.Operator):
 
     # Generate collection of trees
     create_collection: BoolProperty(name="Create Collection", description="Create a new Collection for the new randomized objects", default=True)  
-
+    
     def light_setting(self):
 
         sun_data = bpy.data.lights.new('sun', type='SUN')
@@ -130,6 +130,59 @@ class Environment_Operator(bpy.types.Operator):
         
         return water_mat
     
+    def generate_lantern(self,location_x):
+
+        bpy.ops.mesh.primitive_cylinder_add()
+        lantern_1 = bpy.context.active_object
+        bpy.ops.mesh.primitive_cylinder_add()
+        lantern_2=bpy.context.active_object
+        lantern_1.name='lantern'
+        lantern_2.name='lantern light'
+        bpy.ops.object.join()
+        
+         
+
+        #scale
+        lantern_1.scale[0]= 0.5
+        lantern_1.scale[1]= 0.5
+        lantern_1.scale[2]= 5
+
+        lantern_2.scale[0]= 0.5
+        lantern_2.scale[1]= 0.5
+        lantern_2.scale[2]= 0.7
+
+        #position
+        lantern_1.location[0]=location_x
+        lantern_1.location[1]=-19.5
+        lantern_1.location[2]= 5
+        lantern_2.location[0]=location_x
+        lantern_2.location[1]=-19.5
+        lantern_2.location[2]= 10.7
+
+        
+
+
+        #create Material
+        new_mat = bpy.data.materials.new(name = "My Material")
+        black_mat = bpy.data.materials.new(name="Black")
+        black_mat.diffuse_color=(0,0,0,1)
+        lantern_2.data.materials.append(new_mat)
+        lantern_1.data.materials.append(black_mat)
+
+
+        new_mat.use_nodes = True
+        nodes = new_mat.node_tree.nodes
+        material_output = nodes.get("Material Output")
+        node_emission = nodes.new(type='ShaderNodeEmission')
+
+        #glow effect
+        node_emission.inputs[0].default_value = (0.0, 0.1, 1.0, 1 )#colour
+        node_emission.inputs[1].default_value = 500.0 #strength
+
+        links= new_mat.node_tree.links
+        links.new(node_emission.outputs[0], material_output.inputs[0])
+        
+    
     def generate_Street(self):
         bpy.ops.mesh.primitive_plane_add()
         street = bpy.context.active_object
@@ -155,7 +208,8 @@ class Environment_Operator(bpy.types.Operator):
         #load image to node
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
-        bpy.ops.image.open(filepath="/Users/HFU/Documents/Furtwangen/Uni/Semester_5/Medienproduktion/img/street.png")
+        base_path = os.getcwd()
+        bpy.ops.image.open(filepath=base_path)
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
         
@@ -249,14 +303,14 @@ class Environment_Operator(bpy.types.Operator):
         bpy.ops.object.editmode_toggle()
 
         bpy.ops.mesh.primitive_plane_add(location=(0, -53, 0),scale=(self.meadow_size,self.meadow_size,0))
-        meadow_barn_side = bpy.context.active_object
+        meadow_house_side = bpy.context.active_object
 
         #edit plane
         bpy.ops.object.editmode_toggle()
         bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
         bpy.ops.object.editmode_toggle()
 
-        meadow_all = [meadow,meadow_barn_side]        
+        meadow_all = [meadow,meadow_house_side]        
 
         for i in range(len(meadow_all)):
 
@@ -442,7 +496,201 @@ class Environment_Operator(bpy.types.Operator):
         for objref in newobjects:
             # link new object to new collection
             newcol.objects.link(objref)
+    
+        class house: 
 
+            number_of_floors = 2
+
+            groundX = 40
+            groundY= 40
+            groundZ= 0.5
+
+            housemainX = 20
+            housemainY = 15
+            housemainZ = 10
+
+            garageX = 12
+            garageY = 15
+            garageZ = 6
+
+            door_size_x = 0.3
+            door_size_y = 2.5
+            door_size_z = 4
+    
+            patio_size_x = 0.3
+            patio_size_y = 3.5
+            patio_size_z = 4
+
+
+
+            garagedoor_size_x = 0.3
+            garagedoor_size_y = 4.5
+            garagedoor_size_z = 4
+
+
+            def building_material(self) -> bpy.types.Material:
+
+                building_mat: bpy.types.Material = bpy.data.materials.new("Water Material")
+                building_mat.use_nodes = True
+
+                nodes_building: typing.List[bpy.types.Node] = building_mat.node_tree.nodes
+                node_musgrav: bpy.types.Node = nodes_building.new("ShaderNodeTexMusgrave")
+                node_texcoord: bpy.types.Node = nodes_building.new("ShaderNodeTexCoord")
+                node_bump: bpy.types.Node = nodes_building.new("ShaderNodeBump")
+                node_noise: bpy.types.Node = nodes_building.new("ShaderNodeTexNoise")
+                node_mix: bpy.types.Node = nodes_building.new("ShaderNodeMixRGB")
+                node_colorramp_1: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")
+                node_colorramp_2: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")
+
+
+                node_mapping: bpy.types.Node = nodes_building.new("ShaderNodeMapping")
+
+                node_mix.blend_type = 'DIFFERENCE'
+                node_bump.inputs[0].default_value = 0.3
+                node_musgrav.inputs[3].default_value = 21.000
+                node_musgrav.inputs[3].default_value = 0
+                node_noise.inputs[2].default_value = 6.000
+                node_noise.inputs[3].default_value = 16.000
+                node_noise.inputs[4].default_value = 0.1
+                node_noise.inputs[5].default_value = 4.0
+                node_colorramp_1.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+                node_colorramp_1.color_ramp.elements[1].color =  (0.781435, 0.781435, 0.781435, 1)
+
+                node_colorramp_2.color_ramp.elements[1].color = (0.875713, 0.875713, 0.875713, 1)
+                node_colorramp_2.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+
+
+                building_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
+
+                building_mat.node_tree.links.new(node_mapping.outputs[0],node_musgrav.inputs[0])
+                building_mat.node_tree.links.new(node_mapping.outputs[0],node_noise.inputs[0])
+
+                building_mat.node_tree.links.new(node_musgrav.outputs[0],node_mix.inputs[1])
+
+                building_mat.node_tree.links.new(node_noise.outputs[0],node_colorramp_1.inputs[0])
+                building_mat.node_tree.links.new(node_colorramp_1.outputs[0], node_mix.inputs[2])
+
+                building_mat.node_tree.links.new( node_mix.outputs[0],node_colorramp_2.inputs[0])
+                building_mat.node_tree.links.new( node_mix.outputs[0],node_bump.inputs[2])
+
+                building_mat.node_tree.links.new( node_colorramp_2.outputs[0], nodes_building["Principled BSDF"].inputs[0])
+                building_mat.node_tree.links.new( node_bump.outputs[0], nodes_building["Principled BSDF"].inputs[20])
+
+                return building_mat
+
+
+            def generate_building(self):
+
+                bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
+
+
+                if  self.number_of_floors == 2:
+                    #extrudien
+                    bpy.ops.object.mode_set( mode   = 'EDIT'   )
+                    bpy.ops.mesh.select_mode( type  = 'FACE'   )
+                    bpy.ops.mesh.select_all( action = 'SELECT' )
+
+                    bpy.ops.mesh.extrude_region_move(
+                    TRANSFORM_OT_translate={"value":(0, 0, 8)})
+
+
+                bpy.ops.object.mode_set( mode   = 'EDIT'   )
+                bpy.ops.mesh.select_mode( type  = 'FACE'   )
+                bpy.ops.mesh.select_all( action = 'SELECT' )
+
+                bpy.ops.mesh.extrude_region_move(
+                TRANSFORM_OT_translate={"value":(0, 0, 3)})  
+                bpy.ops.object.mode_set( mode = 'OBJECT' )
+                     # extrudieren Face skalieren (ops transforn resize auf einer achse) 
+                mainhouse = bpy.context.object
+
+                mainhouse.data.materials.append(self.building_material()) 
+
+                bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(self.garageX*0.33, self.garageY ,self.garageZ * 0.5), scale=(self.garageX, self.garageY, self.garageZ))
+
+                garage = bpy.context.object
+                garage.data.materials.append(self.building_material()) 
+
+
+
+
+                door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
+
+                patio1 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( self.housemainX *-0.5 , self.housemainY *0.33, self.housemainZ*0.2))
+                patio2 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *-0.25 , self.housemainY *0.5, self.housemainZ*0.2))
+                patio3 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *0.2 , self.housemainY *0.5, self.housemainZ*0.8))
+
+                garagedoor1 = bpy.ops.mesh.primitive_cube_add(scale=(self.garagedoor_size_x, self.garagedoor_size_y, self.garagedoor_size_z),location=( self.housemainX *0.5 , self.housemainY *1, self.garagedoor_size_z*0.5))
+
+
+
+            def generate_ground(self):
+                bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, self.housemainY *0.16666, 0), scale=(self.groundX, self.groundY, self.groundZ))
+
+                ground = bpy.context.object
+                ground.name = "ground"
+                new_mat = bpy.data.materials.new(name = "Wood Floor")
+                ground.data.materials.append(new_mat)
+
+                new_mat.use_nodes = True
+                nodes = new_mat.node_tree.nodes
+
+                    #Operators
+                principled_node = nodes.get('Principled BSDF')
+
+                    #load image to node
+                    # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+                bpy.ops.image.open(filepath="/Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
+                my_image_node = nodes.new("ShaderNodeTexImage")
+                my_image_node.image = bpy.data.images["WoodFloor047_1K_Color.jpg"]
+
+                    #linking the nodes
+                links = new_mat.node_tree.links
+                links.new(my_image_node.outputs[0], principled_node.inputs[0])   
+
+
+            def generate_Window(self):
+
+                windows_size_x = 0.5
+                windows_size_y = 3
+                windows_size_z = 2
+
+
+
+
+                window1 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
+                window2 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90))
+                window3 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
+                window4 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90))
+
+                sidewindows_size_x = 3
+                sidewindows_size_y = 0.5
+                sidewindows_size_z = 2
+
+                window5 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90))
+                window6 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90))
+                window7 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90))
+
+                new_mat = bpy.data.materials.new(name = "Wood Floor")
+
+                windows = [window1,window2,window3,window4,window5,window6,window7]
+
+
+
+
+
+
+                windows
+                print(windows)      
+
+
+
+                house= house()
+                house.generate_building()
+                house.generate_Window()
+                house.generate_ground()
+                #house.generate_Garagedoor()
+        
     def generate_trees(self):
 
          # get window_manager context to make updating the progress indicator less code
@@ -617,6 +865,7 @@ class Environment_Operator(bpy.types.Operator):
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
+<<<<<<< HEAD
         #barn = Barn()
         #barn.generate_building()
         #self.generate_fence()
@@ -628,35 +877,19 @@ class Environment_Operator(bpy.types.Operator):
         #self.generate_trees()  
         #self.generate_stones()
         self.generate_lantern()
+=======
+        self.generate_fence()
+        self.generate_meadow()
+        self.generate_Water()
+        self.generate_Street()
+        self.light_setting()
+        self.generate_pavement()
+        self.generate_trees()  
+        self.generate_stones()
+>>>>>>> 6181a656eefdda6c88f16da8bf507cc4bc3e20b0
         
         return {'FINISHED'}
 
-class Barn: 
-
-    barn_x = 15
-    barn_y = 25
-    barn_z = 10
-
-    roof_width_x = 13
-    roof_width_y = 25
-    roof_height_z = 8
-
-    inner_space_width_x = 13
-    inner_space_width_y = 27
-    inner_space_height_z = 8
-
-    def generate_building(self):
-
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.barn_z*0.5), scale=(self.barn_x, self.barn_y,self.barn_z))
-        mainhouse = bpy.context.object
-        #mainhouse.data.materials.append(self.building_material()) 
-
-        cube_mesh_roof = bpy.ops.mesh.primitive_cube_add(scale=(self.roof_width_x, self.roof_width_y, self.roof_height_z),location=( 0 , -55, self.barn_z))
-
-        cube_mesh_inner_space = bpy.ops.mesh.primitive_cube_add(scale=(self.inner_space_width_x, self.inner_space_width_y, self.inner_space_height_z),location=( 0 , -55, self.barn_z*0.5))
-
-        #modifier_bool = mainhouse.modifiers.new("Main Bool", "BOOLEAN")
-        #modifier_bool.object = cube_mesh_inner_space 
 
 classes = [Environment_Panel,Environment_Operator, Delete_Scene]
 
