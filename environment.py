@@ -211,7 +211,7 @@ class Environment_Operator(bpy.types.Operator):
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
         base_path = os.getcwd()
-        bpy.ops.image.open(filepath=base_path)
+        bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
         
@@ -660,10 +660,11 @@ class Environment_Operator(bpy.types.Operator):
             fence.name = "fence_vertical".format(i) 
             fences_vertical.append(fence)
             fences_vertical[i].data.materials.append(self.add_fence_texture_vertical())
+            if fences_vertical[i].location[0] > self.meadow_size or fences_vertical[i].location[0] < -self.meadow_size:
+                bpy.data.objects.remove( fences_vertical[i] )
 
-            
         for i in range(2):
-            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (self.fence_z/2.5) - (2 * i)), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
+            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (self.fence_z/2.5) - (2 * i)), scale=(self.meadow_size*2, self.fence_scale_y, self.fence_scalet_z))
             fence= bpy.context.active_object
             fence.name = "fence_horinzontal".format(i)  
             fences_horinzontal.append(fence)
