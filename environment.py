@@ -132,44 +132,11 @@ class Environment_Operator(bpy.types.Operator):
     
     def generate_lantern(self,location_x):
 
-        bpy.ops.mesh.primitive_cylinder_add()
-        lantern_1 = bpy.context.active_object
-        bpy.ops.mesh.primitive_cylinder_add()
-        lantern_2=bpy.context.active_object
-        lantern_1.name='lantern'
-        lantern_2.name='lantern light'
-        bpy.ops.object.join()
-        
-         
-
-        #scale
-        lantern_1.scale[0]= 0.5
-        lantern_1.scale[1]= 0.5
-        lantern_1.scale[2]= 5
-
-        lantern_2.scale[0]= 0.5
-        lantern_2.scale[1]= 0.5
-        lantern_2.scale[2]= 0.7
-
-        #position
-        lantern_1.location[0]=location_x
-        lantern_1.location[1]=-19.5
-        lantern_1.location[2]= 5
-        lantern_2.location[0]=location_x
-        lantern_2.location[1]=-19.5
-        lantern_2.location[2]= 10.7
-
-        
-
-
         #create Material
         new_mat = bpy.data.materials.new(name = "My Material")
         black_mat = bpy.data.materials.new(name="Black")
         black_mat.diffuse_color=(0,0,0,1)
-        lantern_2.data.materials.append(new_mat)
-        lantern_1.data.materials.append(black_mat)
-
-
+    
         new_mat.use_nodes = True
         nodes = new_mat.node_tree.nodes
         material_output = nodes.get("Material Output")
@@ -181,6 +148,30 @@ class Environment_Operator(bpy.types.Operator):
 
         links= new_mat.node_tree.links
         links.new(node_emission.outputs[0], material_output.inputs[0])
+
+        lantern_array = []
+        lantern_lights =[]
+
+        for i in range(round((self.meadow_size/2)-1)):
+
+            #add latern MESHES
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 5), scale=( 0.5, 0.5, 5))
+            lantern= bpy.context.active_object 
+            lantern.name='lantern'.format(i) 
+            lantern_array.append(lantern)
+            lantern_array[i].data.materials.append(black_mat)
+
+            #add latern_light MESHES
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 7.8112), scale=(0.5, 0.5, 0.7))
+            lantern_light= bpy.context.active_object 
+            lantern_light.name='lantern'.format(i) 
+            lantern_lights.append(lantern_light)
+            lantern_lights[i].data.materials.append(new_mat) 
+
+            if lantern_array[i].location[0] > self.meadow_size or lantern_array[i].location[0] < -self.meadow_size:
+                    bpy.data.objects.remove( lantern_array[i] )
+                    bpy.data.objects.remove( lantern_lights[i])
+
         
     
     def generate_Street(self):
@@ -191,8 +182,10 @@ class Environment_Operator(bpy.types.Operator):
         #move Object
         street.location = (0, -25,0)
 
-        #length
-        street.scale = (20, 5, 0)
+        #edit plane
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.meadow_size,5,1))
+        bpy.ops.object.editmode_toggle()
 
         #create the Material
         new_mat = bpy.data.materials.new(name = "My Material")
@@ -209,7 +202,7 @@ class Environment_Operator(bpy.types.Operator):
         # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
         #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
         base_path = os.getcwd()
-        bpy.ops.image.open(filepath=base_path)
+        bpy.ops.image.open(filepath="/Users/HFU/Documents/Furtwangen/Uni/Semester_5/Medienproduktion/img/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
         
@@ -220,7 +213,7 @@ class Environment_Operator(bpy.types.Operator):
     def generate_pavement(self):
 
         # add plane
-        bpy.ops.mesh.primitive_plane_add(location=(0, -self.meadow_size - 11.5, 0))
+        bpy.ops.mesh.primitive_plane_add(location=(0, -31.5, 0))
         
         pavement = bpy.context.active_object
 
@@ -269,7 +262,7 @@ class Environment_Operator(bpy.types.Operator):
     def generate_Water(self):
 
         # add plane
-        bpy.ops.mesh.primitive_plane_add(location=(0, self.meadow_size + 4, 0))
+        bpy.ops.mesh.primitive_plane_add(location=(0, 24, 0))
 
         water = bpy.context.active_object
 
@@ -307,7 +300,7 @@ class Environment_Operator(bpy.types.Operator):
 
         #edit plane
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+        bpy.ops.transform.resize(value=(self.meadow_size,20,0))
         bpy.ops.object.editmode_toggle()
 
         meadow_all = [meadow,meadow_house_side]        
@@ -356,18 +349,23 @@ class Environment_Operator(bpy.types.Operator):
         lantern_lights =[]
 
         for i in range(round((self.meadow_size/2)-1)):
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 5), scale=( 0.5, 0.5, 5))
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -30, 5), scale=( 0.5, 0.5, 10))
             lantern= bpy.context.active_object 
             lantern.name='lantern'.format(i) 
             lantern_array.append(lantern)
             lantern_array[i].data.materials.append(black_mat)
 
-        for i in range(round((self.meadow_size/2)-1)):
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 7.8112), scale=(0.5, 0.5, 0.7))
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -30, 10.34), scale=(0.5, 0.5, 0.7))
             lantern_light= bpy.context.active_object 
             lantern_light.name='lantern'.format(i) 
             lantern_lights.append(lantern_light)
             lantern_lights[i].data.materials.append(new_mat)            
+
+            if lantern_array[i].location[0] > self.meadow_size or lantern_array[i].location[0] < -self.meadow_size:
+                bpy.data.objects.remove( lantern_array[i] )
+                bpy.data.objects.remove( lantern_lights[i] )
+
+            
 
 
     def stone_material(self) -> bpy.types.Material:
@@ -483,7 +481,7 @@ class Environment_Operator(bpy.types.Operator):
             obj.rotation_euler[1] = random.uniform(0.1, 5.0)
             obj.scale = (random.randrange(1, 3),random.randrange(1, 3),1)    
 
-            x = random.randrange(-20, 20)
+            x = random.randrange(-self.meadow_size, self.meadow_size)
             y = random.randrange(-20, 20)
                                                     
             obj.location = (x, y, 1)
@@ -578,7 +576,7 @@ class Environment_Operator(bpy.types.Operator):
             if obj.type == 'CURVE':
 
                 x = random.randrange(-self.meadow_size, self.meadow_size)
-                y = random.randrange(-self.meadow_size, self.meadow_size)
+                y = random.randrange(-20, 20)
                                                          
                 obj.location = (x, y, 0)
                     
@@ -616,7 +614,6 @@ class Environment_Operator(bpy.types.Operator):
         nodes_fence["Principled BSDF"].inputs[0].default_value = (0.455477, 0.463941, 0.489882, 1)
         nodes_fence["Principled BSDF"].inputs[5].default_value = 0
         nodes_fence["Principled BSDF"].inputs[7].default_value = 0.9
-
         fence_mat.node_tree.links.new(node_musgrave.outputs[0], node_texvoronoi.inputs[0])
         fence_mat.node_tree.links.new(node_texvoronoi.outputs[0], nodes_fence["Principled BSDF"].inputs[4])
         fence_mat.node_tree.links.new(node_texnoise.outputs[0], nodes_fence["Material Output"].inputs[2])
@@ -658,10 +655,11 @@ class Environment_Operator(bpy.types.Operator):
             fence.name = "fence_vertical".format(i) 
             fences_vertical.append(fence)
             fences_vertical[i].data.materials.append(self.add_fence_texture_vertical())
+            if fences_vertical[i].location[0] > self.meadow_size or fences_vertical[i].location[0] < -self.meadow_size:
+                bpy.data.objects.remove( fences_vertical[i] )
 
-            
         for i in range(2):
-            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (self.fence_z/2.5) - (2 * i)), scale=(self.fence_scale_x, self.fence_scale_y, self.fence_scalet_z))
+            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (self.fence_z/2.5) - (2 * i)), scale=(self.meadow_size*2, self.fence_scale_y, self.fence_scalet_z))
             fence= bpy.context.active_object
             fence.name = "fence_horinzontal".format(i)  
             fences_horinzontal.append(fence)
@@ -680,6 +678,7 @@ class Environment_Operator(bpy.types.Operator):
         self.generate_pavement()
         self.generate_trees()  
         self.generate_stones()
+        self.generate_lantern()
         
         return {'FINISHED'}
 
