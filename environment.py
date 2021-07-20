@@ -130,6 +130,59 @@ class Environment_Operator(bpy.types.Operator):
         
         return water_mat
     
+    def generate_lantern(self,location_x):
+
+        bpy.ops.mesh.primitive_cylinder_add()
+        lantern_1 = bpy.context.active_object
+        bpy.ops.mesh.primitive_cylinder_add()
+        lantern_2=bpy.context.active_object
+        lantern_1.name='lantern'
+        lantern_2.name='lantern light'
+        bpy.ops.object.join()
+        
+         
+
+        #scale
+        lantern_1.scale[0]= 0.5
+        lantern_1.scale[1]= 0.5
+        lantern_1.scale[2]= 5
+
+        lantern_2.scale[0]= 0.5
+        lantern_2.scale[1]= 0.5
+        lantern_2.scale[2]= 0.7
+
+        #position
+        lantern_1.location[0]=location_x
+        lantern_1.location[1]=-19.5
+        lantern_1.location[2]= 5
+        lantern_2.location[0]=location_x
+        lantern_2.location[1]=-19.5
+        lantern_2.location[2]= 10.7
+
+        
+
+
+        #create Material
+        new_mat = bpy.data.materials.new(name = "My Material")
+        black_mat = bpy.data.materials.new(name="Black")
+        black_mat.diffuse_color=(0,0,0,1)
+        lantern_2.data.materials.append(new_mat)
+        lantern_1.data.materials.append(black_mat)
+
+
+        new_mat.use_nodes = True
+        nodes = new_mat.node_tree.nodes
+        material_output = nodes.get("Material Output")
+        node_emission = nodes.new(type='ShaderNodeEmission')
+
+        #glow effect
+        node_emission.inputs[0].default_value = (0.0, 0.1, 1.0, 1 )#colour
+        node_emission.inputs[1].default_value = 500.0 #strength
+
+        links= new_mat.node_tree.links
+        links.new(node_emission.outputs[0], material_output.inputs[0])
+        
+    
     def generate_Street(self):
         bpy.ops.mesh.primitive_plane_add()
         street = bpy.context.active_object
