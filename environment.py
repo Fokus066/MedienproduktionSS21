@@ -544,7 +544,7 @@ class Environment_Operator(bpy.types.Operator):
 
             def generate_building(self):
 
-                bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
+                bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, -55,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
 
 
                 if  self.number_of_floors == 2:
