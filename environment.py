@@ -191,8 +191,10 @@ class Environment_Operator(bpy.types.Operator):
         #move Object
         street.location = (0, -25,0)
 
-        #length
-        street.scale = (20, 5, 0)
+        #edit plane
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.meadow_size,5,1))
+        bpy.ops.object.editmode_toggle()
 
         #create the Material
         new_mat = bpy.data.materials.new(name = "My Material")
@@ -220,7 +222,7 @@ class Environment_Operator(bpy.types.Operator):
     def generate_pavement(self):
 
         # add plane
-        bpy.ops.mesh.primitive_plane_add(location=(0, -self.meadow_size - 11.5, 0))
+        bpy.ops.mesh.primitive_plane_add(location=(0, -31.5, 0))
         
         pavement = bpy.context.active_object
 
@@ -269,7 +271,7 @@ class Environment_Operator(bpy.types.Operator):
     def generate_Water(self):
 
         # add plane
-        bpy.ops.mesh.primitive_plane_add(location=(0, self.meadow_size + 4, 0))
+        bpy.ops.mesh.primitive_plane_add(location=(0, 24, 0))
 
         water = bpy.context.active_object
 
@@ -307,7 +309,7 @@ class Environment_Operator(bpy.types.Operator):
 
         #edit plane
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,self.meadow_size,0))
+        bpy.ops.transform.resize(value=(self.meadow_size,20,0))
         bpy.ops.object.editmode_toggle()
 
         meadow_all = [meadow,meadow_house_side]        
@@ -578,7 +580,7 @@ class Environment_Operator(bpy.types.Operator):
             if obj.type == 'CURVE':
 
                 x = random.randrange(-self.meadow_size, self.meadow_size)
-                y = random.randrange(-self.meadow_size, self.meadow_size)
+                y = random.randrange(-20, 20)
                                                          
                 obj.location = (x, y, 0)
                     
