@@ -4,7 +4,7 @@ import bmesh
 class house: 
 
 
-    number_of_floors = 2
+    number_of_floors = 1
 
     groundX = 40
     groundY= 40
@@ -97,14 +97,17 @@ class house:
 
             bpy.ops.mesh.extrude_region_move(
             TRANSFORM_OT_translate={"value":(0, 0, 8)})
-            
-            
-        bpy.ops.object.mode_set( mode   = 'EDIT'   )
-        bpy.ops.mesh.select_mode( type  = 'FACE'   )
-        bpy.ops.mesh.select_all( action = 'SELECT' )
 
-        bpy.ops.mesh.extrude_region_move(
-        TRANSFORM_OT_translate={"value":(0, 0, 3)})  
+        else:
+            bpy.ops.object.mode_set( mode   = 'EDIT'   )
+            bpy.ops.mesh.select_mode( type  = 'FACE'   )
+            bpy.ops.mesh.select_all( action = 'SELECT' )
+
+            bpy.ops.mesh.extrude_region_move(
+            TRANSFORM_OT_translate={"value":(0, 0, 3)})
+            
+
+ 
         bpy.ops.object.mode_set( mode = 'OBJECT' )
              # extrudieren Face skalieren (ops transforn resize auf einer achse) 
         mainhouse = bpy.context.object
@@ -126,6 +129,7 @@ class house:
         patio3 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *0.2 , self.housemainY *0.5, self.housemainZ*0.8))
 
         garagedoor1 = bpy.ops.mesh.primitive_cube_add(scale=(self.garagedoor_size_x, self.garagedoor_size_y, self.garagedoor_size_z),location=( self.housemainX *0.5 , self.housemainY *1, self.garagedoor_size_z*0.5))
+
     
     
 
@@ -148,19 +152,21 @@ class house:
         bpy.ops.image.open(filepath="/Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["WoodFloor047_1K_Color.jpg"]
-            
+        #new_mat = bpy.data.materials.new(name = "Wood Floor")
             #linking the nodes
         links = new_mat.node_tree.links
-        links.new(my_image_node.outputs[0], principled_node.inputs[0])   
+        links.new(my_image_node.outputs[0], principled_node.inputs[0])    
 
 
     def generate_Window(self):
 
         windows_size_x = 0.5
         windows_size_y = 3
-        windows_size_z = 2
+        windows_size_z = 3
 
-        
+        sidewindows_size_x = 3
+        sidewindows_size_y = 0.5
+        sidewindows_size_z = 3
         
         
         window1 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
@@ -168,25 +174,74 @@ class house:
         window3 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
         window4 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90))
 
-        sidewindows_size_x = 3
-        sidewindows_size_y = 0.5
-        sidewindows_size_z = 2
-
         window5 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90))
         window6 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90))
         window7 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90))
-
-        new_mat = bpy.data.materials.new(name = "Wood Floor")
         
-        windows = [window1,window2,window3,window4,window5,window6,window7]
+        window8 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90-5))
+        window9 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90-5))
+       
+        window11 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90-5))
+
+        window12 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90-5))
+        window13 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90-5))
+        window14 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90-5))
+
+        window15 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, self.housemainY*0.5, self.housemainZ*0.9))
+        window16 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( -self.housemainX*0.33, self.housemainY*0.5, self.housemainZ*0.9))
+        
+
+
+        
+
+
+        windows = [window1,window2,window3,window4,window5,window6,window7,window8,window9,window11,window12,window13,window14,window15,window16]
+
+        if  self.number_of_floors == 2:
+
+            
+            window17 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( -self.housemainX*0.33, self.housemainY*0.5, self.housemainZ*1.4))
+            window18 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, self.housemainY*0.5, self.housemainZ*1.4))
+            window19 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.3, self.housemainY*0.5, self.housemainZ*1.4))
+
+            window20 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90 +5))
+            window21 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90+5))
+            window22 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90+5))
+            window23 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90+5))
+
+            window24 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90+5))
+            window25 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90+5))
+            window26 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90+5))
+
+            
+            windows = [window17,window18,window19,window20,window21,window22,window23,window24,window25,window26]
+
+            
        
             
             
 
             
-       
-        windows
-        print(windows)      
+        # for i in range(len(windows)): 
+        #     windows[i].data.materials.append(new_mat)
+
+        #     new_mat.use_nodes = True
+        #     nodes = new_mat.node_tree.nodes
+
+        #     #Operators
+        #     principled_node = nodes.get('Principled BSDF')
+
+        #     #load image to node
+        #     # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+        #     bpy.ops.image.open(filepath="C:/Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
+        #     my_image_node = nodes.new("ShaderNodeTexImage")
+        #     my_image_node.image = bpy.data.images["WoodFloor047_1K_Color.jpg"]
+            
+        #     #linking the nodes
+        #     links = new_mat.node_tree.links
+        #     links.new(my_image_node.outputs[0], principled_node.inputs[0]) 
+        # windows
+        # print(windows)      
 
 
 
