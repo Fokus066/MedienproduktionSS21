@@ -727,6 +727,52 @@ class Environment_Operator(bpy.types.Operator):
         cloud1.data.materials.append(self.cloud_material())
         cloud2.data.materials.append(self.cloud_material())    
 
+    def generate_houses(self):
+        house_size_x = 20
+        house_size_y = 15
+        house_size_z = 10
+
+        house_loc_y = -53
+        house_loc_x = 5
+        house_loc_z = house_size_z * 0.5
+
+        garage_size_x = 12
+        garage_size_y = 15
+        garage_size_z = 6
+
+        garage_loc_y = -53
+        garage_loc_x = house_loc_x - house_size_x * 0.75
+        garage_loc_z = garage_size_z * 0.5
+
+        ground_size_x = 21
+        ground_size_y = 31
+        ground_size_z = 1
+
+        ground_loc_x = -2.75
+        ground_loc_y = -63
+        ground_loc_z = 0.95
+
+        if self.meadow_size >= 50 and self.meadow_size < 75:
+            number_houses = 2
+        elif self.meadow_size is 75:
+            number_houses = 3
+        else:
+            number_houses = 1
+
+        diff = self.meadow_size - 25
+
+        for i in range(number_houses):
+                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2  + (i * 50), house_loc_y, house_loc_z),scale=(house_size_x, house_size_y, house_size_z))
+                house = bpy.context.object
+                house.rotation_euler = (0 , 0 ,1.5708 )
+
+                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -15, garage_loc_y, garage_loc_z),scale=(garage_size_x, garage_size_y, garage_size_z))
+                garage = bpy.context.object
+                garage.rotation_euler = (0 , 0 ,1.5708 )
+
+                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -7, ground_loc_y, ground_loc_z),scale=(ground_size_x, ground_size_y, ground_size_z))
+                ground = bpy.context.object
+                ground.rotation_euler = (0 , 0 ,1.5708 )
           
     
     # Run the actual code upon pressing "OK" on the dialog
@@ -746,25 +792,23 @@ class Environment_Operator(bpy.types.Operator):
             main_house.house_loc_x = main_house.house_loc_x - diff
             main_house.garage_loc_x = main_house.garage_loc_x-diff
             main_house.ground_loc_x = main_house.ground_loc_x-diff
-            second_house.garage_loc_x = second_house.garage_loc_x-100
-            second_house.ground_loc_x = second_house.ground_loc_x-130
 
 
-        main_house.generate_obj()
+        #main_house.generate_obj()
         
         if self.meadow_size >= 50 and self.meadow_size <= 75:
             factor = 50
             second_house.house_loc_x = main_house.house_loc_x + factor
-            second_house.garage_loc_x = main_house.house_loc_x + factor
-            second_house.ground_loc_x = main_house.house_loc_x + factor
-            second_house.generate_obj()
+            second_house.garage_loc_x = main_house.house_loc_x + factor - 15
+            second_house.ground_loc_x = main_house.house_loc_x + factor - 7.5
+            #second_house.generate_obj()
             if self.meadow_size is 75:
                 third_house.house_loc_x = second_house.house_loc_x + factor
-                third_house.garage_loc_x = second_house.house_loc_x + factor
-                third_house.ground_loc_x = second_house.house_loc_x + factor
-                third_house.generate_obj()
+                third_house.garage_loc_x = second_house.house_loc_x + factor - 15
+                third_house.ground_loc_x = second_house.house_loc_x + factor - 7.5
+                #third_house.generate_obj()
 
-
+        self.generate_houses()
         self.generate_fence()
         self.generate_meadow()
         self.generate_Water()
@@ -805,8 +849,8 @@ class House:
     ground_loc_y = -63
     ground_loc_z = 0.95
 
-
     def generate_obj(self):
+
         bpy.ops.mesh.primitive_cube_add(location=(self.house_loc_x, self.house_loc_y, self.house_loc_z),scale=(self.house_size_x, self.house_size_y, self.house_size_z))
         house = bpy.context.object
         house.rotation_euler = (0 , 0 ,1.5708 )
