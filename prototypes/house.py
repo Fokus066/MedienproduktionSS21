@@ -123,6 +123,8 @@ class house:
 
 
         door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
+       
+        
 
         patio1 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( self.housemainX *-0.5 , self.housemainY *0.33, self.housemainZ*0.2))
         patio2 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *-0.25 , self.housemainY *0.5, self.housemainZ*0.2))
@@ -192,9 +194,6 @@ class house:
         
 
 
-        
-
-
         windows = [window1,window2,window3,window4,window5,window6,window7,window8,window9,window11,window12,window13,window14,window15,window16]
 
         if  self.number_of_floors == 2:
@@ -233,7 +232,7 @@ class house:
 
         #     #load image to node
         #     # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
-        #     bpy.ops.image.open(filepath="C:/Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
+        #     bpy.ops.image.open(filepath="Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
         #     my_image_node = nodes.new("ShaderNodeTexImage")
         #     my_image_node.image = bpy.data.images["WoodFloor047_1K_Color.jpg"]
             
