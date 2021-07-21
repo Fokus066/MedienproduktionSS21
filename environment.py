@@ -740,7 +740,7 @@ class Environment_Operator(bpy.types.Operator):
 
         garage_size_x = 12
         garage_size_y = 15
-        garage_size_z = 6
+        garage_size_z = 8
 
         garage_loc_y = -53
         garage_loc_x = house_loc_x - house_size_x * 0.75
@@ -753,6 +753,10 @@ class Environment_Operator(bpy.types.Operator):
         ground_loc_x = -2.75
         ground_loc_y = -63
         ground_loc_z = 0.95
+
+        house_door_size_x = 0.5
+        house_door_size_y = 3
+        house_door_size_z = 4
 
         if self.meadow_size >= 50 and self.meadow_size < 75:
             number_houses = 2
@@ -786,12 +790,11 @@ class Environment_Operator(bpy.types.Operator):
 
                     bpy.ops.mesh.extrude_region_move(
                     TRANSFORM_OT_translate={"value":(0, 0, 3)})
-            
-
- 
                 bpy.ops.object.mode_set( mode = 'OBJECT' )
 
-
+                bpy.ops.mesh.primitive_cube_add(scale=(house_door_size_x, house_door_size_y, house_door_size_z),location=(  -self.meadow_size/2  + (i * 50), -63, house_door_size_z*0.5))
+                door = bpy.context.object
+                door.rotation_euler = (0 , 0 ,1.5708 )
 
                 bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -15, garage_loc_y, garage_loc_z),scale=(garage_size_x, garage_size_y, garage_size_z))
                 garage = bpy.context.object
