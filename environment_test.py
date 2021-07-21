@@ -753,7 +753,7 @@ class Environment_Operator(bpy.types.Operator):
         node_noise.inputs[3].default_value = 16.000
         node_noise.inputs[4].default_value = 0.1
         node_noise.inputs[5].default_value = 4.0
-        node_colorramp_1.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+        node_colorramp_1.color_ramp.elements[0].color = (random.uniform(0.1, 1.0),random.uniform(0.1, 1.0), random.uniform(0.1, 1.0), 1)
         node_colorramp_1.color_ramp.elements[1].color =  (0.781435, 0.781435, 0.781435, 1)
         
         node_colorramp_2.color_ramp.elements[1].color = (0.875713, 0.875713, 0.875713, 1)
@@ -865,11 +865,7 @@ class Environment_Operator(bpy.types.Operator):
 
                     bpy.ops.mesh.extrude_region_move(
                     TRANSFORM_OT_translate={"value":(0, 0, random.randrange(4,15))})
-
-
-
-            
-
+                    
                 else:
                     bpy.ops.object.mode_set( mode   = 'EDIT'   )
                     bpy.ops.mesh.select_mode( type  = 'FACE'   )
