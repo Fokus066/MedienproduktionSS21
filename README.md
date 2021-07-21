@@ -13,14 +13,18 @@ Der User hat die Möglichkeit mithilfe eines UI Details in der Umgebung zu verä
 - Blattform
 - Darstellung der Blätter (on/off)
 - Objekte innerhalb einer Collection (on/off)
+- Wolken generieren (on/off)
+- Zufällige Höhe der Häuser (on/off)
 
 ## Repository Struktur
 ### Environment
 Das Addon muss aus der environment.py gestartet werden: 
-1. Öffnen des Files innerhalb des Blender-Scripting-Reiters
-2. Ausführen des Codes
-3. Environment Operator unter Create öffnen und ggf. Werte im UI ändern
-4. Auf 'OK' klicken
+1. Baum Addon aktivieren in Blender: Edit -> Preferences -> Addons -> checkbox Sapling Tree Gen aktivieren
+2. Öffnen des environment.py Files innerhalb des Blender-Scripting-Reiters
+3. Absoluten Pfad für Straßen Textur "street.png" aus dem Verzeichnis /materials in Zeile 199 zu filepath einfügen (Relativer Pfad haben wir leider nicht implementieren können :( )
+4. Ausführen des Codes
+5. Environment Operator unter Create öffnen und ggf. Werte im UI ändern
+6. Auf 'OK' klicken
 
 ### Prototypen
 Die meisten Objekte sind separat in files untergliedert und liegen im /prototypes Verzeichnis. 
