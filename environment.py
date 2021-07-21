@@ -728,6 +728,8 @@ class Environment_Operator(bpy.types.Operator):
         cloud2.data.materials.append(self.cloud_material())    
 
     def generate_houses(self):
+
+        boolean = self.random_floors
         house_size_x = 20
         house_size_y = 15
         house_size_z = 10
@@ -762,9 +764,34 @@ class Environment_Operator(bpy.types.Operator):
         diff = self.meadow_size - 25
 
         for i in range(number_houses):
+                if number_houses == 1:
+                    i = 0.5
                 bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2  + (i * 50), house_loc_y, house_loc_z),scale=(house_size_x, house_size_y, house_size_z))
                 house = bpy.context.object
                 house.rotation_euler = (0 , 0 ,1.5708 )
+
+                if  boolean:
+                    #extrudien
+                    bpy.ops.object.mode_set( mode   = 'EDIT'   )
+                    bpy.ops.mesh.select_mode( type  = 'FACE'   )
+                    bpy.ops.mesh.select_all( action = 'SELECT' )
+
+                    bpy.ops.mesh.extrude_region_move(
+                    TRANSFORM_OT_translate={"value":(0, 0, random.randrange(4,15))})
+
+                else:
+                    bpy.ops.object.mode_set( mode   = 'EDIT'   )
+                    bpy.ops.mesh.select_mode( type  = 'FACE'   )
+                    bpy.ops.mesh.select_all( action = 'SELECT' )
+
+                    bpy.ops.mesh.extrude_region_move(
+                    TRANSFORM_OT_translate={"value":(0, 0, 3)})
+            
+
+ 
+                bpy.ops.object.mode_set( mode = 'OBJECT' )
+
+
 
                 bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -15, garage_loc_y, garage_loc_z),scale=(garage_size_x, garage_size_y, garage_size_z))
                 garage = bpy.context.object
