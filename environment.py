@@ -39,10 +39,19 @@ class Environment_Operator(bpy.types.Operator):
             preset_items.append((s, s, 'Use "'+s+'" as preset'))
         return preset_items  
 
+    # set some defaults before popping up the dialog, then pop up the dialog
+    def invoke(self, context, event):
+        self.tree_number = 10
+        self.leaf_shape='hex'
+        self.stones_number = 10
+        self.create_collection = True
+
+        return context.window_manager.invoke_props_dialog(self)
+
     # UI Properties--------------------------------------------------------
     # Define class properties that will show up as UI elements on the dialog
     sunlight_enum: bpy.props.EnumProperty( name="Daytime", description="Select an option", items=[ ("OP1", "daytime",  "set daytime"), ("OP2", "night-time",  "set night-time")])
-    meadow_size: IntProperty(name="Meadow size", description="Square area of meadow", default=25, min=25, max=75)
+    scene_size: IntProperty(name="Scene Size", description="Square area of meadow", default=25, min=25, max=75)
 
     # Define class properties that will show up as UI elements on the dialog
     presets: EnumProperty(name="Preset", description="Available sapling tree presets", items=get_presets)
@@ -55,7 +64,7 @@ class Environment_Operator(bpy.types.Operator):
     show_leaves: BoolProperty(name="Show Leaves", description="Generate leaves for all generated Saplings", default=True)
 
     # random floors enum for house generation
-    random_floors: BoolProperty(name="Random Floors", description="Generate random number of floors of houses", default=False)
+    random_house_height: BoolProperty(name="Random House Height", description="Generate random number of floors of houses", default=False)
 
     # Show Clouds
     show_clouds: BoolProperty(name="Show Clouds", description="Generate Clouds", default=False)
@@ -93,7 +102,7 @@ class Environment_Operator(bpy.types.Operator):
         water = bpy.context.active_object
         #edit plane
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,4,1))
+        bpy.ops.transform.resize(value=(self.scene_size,4,1))
         bpy.ops.object.editmode_toggle()
         # add water color
         water.data.materials.append(self.add_water_color()) 
@@ -124,11 +133,10 @@ class Environment_Operator(bpy.types.Operator):
     
     # Lantern object----------------------------------------------------------------
     def generate_lantern(self):
-        # create material of latern light and stick
-        light_mat = bpy.data.materials.new(name = "Light")
+        #create Material for stick and light
+        light_mat = bpy.data.materials.new(name = "Light Material")
         black_mat = bpy.data.materials.new(name="Black")
         black_mat.diffuse_color=(0,0,0,1)
-        # set node definitions
         light_mat.use_nodes = True
         nodes = light_mat.node_tree.nodes
         material_output = nodes.get("Material Output")
@@ -138,106 +146,90 @@ class Environment_Operator(bpy.types.Operator):
         node_emission.inputs[1].default_value = 500.0 #strength
         links= light_mat.node_tree.links
         links.new(node_emission.outputs[0], material_output.inputs[0])
-        # spaces for generated objects
         lantern_array = []
         lantern_lights =[]
-        # generate proper number of objects based on scene size
-        for i in range(round((self.meadow_size/2)-1)):
-            #add latern MESHES
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 5), scale=( 0.5, 0.5, 5))
+        # generate number of laterns based on scene size
+        for i in range(round((self.scene_size/2)-1)):
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.scene_size + (i * 15), -30.4, 5), scale=( 0.5, 0.5, 10))
             lantern= bpy.context.active_object 
             lantern.name='lantern'.format(i) 
             lantern_array.append(lantern)
             lantern_array[i].data.materials.append(black_mat)
-            #add latern_light MESHES
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -19.5, 7.8112), scale=(0.5, 0.5, 0.7))
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.scene_size + (i * 15), -30.4, 10.34), scale=(0.5, 0.5, 0.7))
             lantern_light= bpy.context.active_object 
             lantern_light.name='lantern'.format(i) 
             lantern_lights.append(lantern_light)
-            lantern_lights[i].data.materials.append(light_mat) 
-            # remove objects if they are not on the scene plane
-            if lantern_array[i].location[0] > self.meadow_size or lantern_array[i].location[0] < -self.meadow_size:
-                    bpy.data.objects.remove( lantern_array[i] )
-                    bpy.data.objects.remove( lantern_lights[i])
+            lantern_lights[i].data.materials.append(light_mat)            
+            if lantern_array[i].location[0] > self.scene_size or lantern_array[i].location[0] < -self.scene_size:
+                bpy.data.objects.remove( lantern_array[i] )
+                bpy.data.objects.remove( lantern_lights[i] ) 
 
-        
-    
+    # Street object------------------------------------------------------
     def generate_Streets(self):
+        # plane as base object
         bpy.ops.mesh.primitive_plane_add()
         street1 = bpy.context.active_object
-        street1.name = "street"
-
-        #edit plane 1
+        street1.name = "street1"
+        #edit street plane 1
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,5,1))
+        bpy.ops.transform.resize(value=(self.scene_size,5,1))
         bpy.ops.object.editmode_toggle()
-
+        # plane as base object
         bpy.ops.mesh.primitive_plane_add()
         street2 = bpy.context.active_object
-        street2.name = "street"
-
-        #edit plane 2
+        street2.name = "street2"
+        #edit street plane 2
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,5,1))
+        bpy.ops.transform.resize(value=(self.scene_size,5,1))
         bpy.ops.object.editmode_toggle()
-
-        #move Object
+        #move objects
         street1.location = (0, -25,0)
         street2.location = (0, -78,0)
-
-        #create the Material
+        #create the material and nodes
         new_mat = bpy.data.materials.new(name = "My Material")
         street1.data.materials.append(new_mat)
         street2.data.materials.append(new_mat)
-
         new_mat.use_nodes = True
         nodes = new_mat.node_tree.nodes
-
         #Operators
         principled_node = nodes.get('Principled BSDF')
 
+        # please add your absolute path from street.png of the materials folder
+        #----------------------------------------------------------------------
+        bpy.ops.image.open(filepath="/your/absolute/path/to/street.png") 
+        #----------------------------------------------------------------------
 
-        #load image to node
-        # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
-        #Fokus: C:\Users\HFU\Documents\Furtwangen\Uni\Semester_5\Medienproduktion\img\street.png
-        base_path = os.getcwd()
-        bpy.ops.image.open(filepath="/Users/manuelhaugg/MedienproduktionSS21/materials/street.png")
         my_image_node = nodes.new("ShaderNodeTexImage")
         my_image_node.image = bpy.data.images["street.png"]
-        
         #linking the nodes
         links = new_mat.node_tree.links
         links.new(my_image_node.outputs[0], principled_node.inputs[0])
 
+    # pavement object---------------------------------------------------------
     def generate_pavement(self):
-
-        # add plane
+        # add plane as base object
         bpy.ops.mesh.primitive_plane_add(location=(0, -31.5, 0))
-        
         pavement = bpy.context.active_object
-
         #edit plane
         bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,1.5,1))
+        bpy.ops.transform.resize(value=(self.scene_size,1.5,1))
         bpy.ops.mesh.subdivide(number_cuts=100, fractal=0.03, fractal_along_normal=1, seed=0)
         bpy.ops.object.editmode_toggle()
-               
+        #added pavement texture
         pavement.data.materials.append(self.add_pavement_texture())        
 
+    #pavement texture generation
     def add_pavement_texture(self) -> bpy.types.Material:
-
         #add material
         pavement_mat: bpy.types.Material = bpy.data.materials.new("pavement material")
         pavement_mat.use_nodes = True
-
+        #add nodes
         nodes_pavement: typing.List[bpy.types.Node] = pavement_mat.node_tree.nodes
         node_texbrick: bpy.types.Node = nodes_pavement.new("ShaderNodeTexBrick")
         node_texchecker1: bpy.types.Node = nodes_pavement.new("ShaderNodeTexChecker")
         node_texchecker2: bpy.types.Node = nodes_pavement.new("ShaderNodeTexChecker")
-
         node_texchecker1.inputs[2].default_value = (0, 0, 0, 1)
         node_texchecker2.inputs[2].default_value = (0, 0, 0, 1)
-
         node_texbrick.offset = 0
         node_texbrick.offset_frequency = 2
         node_texbrick.squash = 2.4
@@ -251,15 +243,43 @@ class Environment_Operator(bpy.types.Operator):
         node_texbrick.inputs[7].default_value = 0.8
         node_texbrick.inputs[8].default_value = 1.4
         node_texbrick.inputs[9].default_value = 5.75
-        
         pavement_mat.node_tree.links.new(node_texchecker1.outputs[1], nodes_pavement["Principled BSDF"].inputs[7])
         pavement_mat.node_tree.links.new(node_texchecker2.outputs[1], nodes_pavement["Principled BSDF"].inputs[4])
         pavement_mat.node_tree.links.new(node_texbrick.outputs[0], nodes_pavement["Principled BSDF"].inputs[0])
         
-        return pavement_mat        
+        return pavement_mat 
 
+    # meadow object---------------------------------------------------------------------
+    def generate_meadow(self):
+        # add plane object 1
+        bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0),scale=(self.scene_size,20,0))
+        meadow = bpy.context.active_object
+        #edit plane 1
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.scene_size,20,0))
+        bpy.ops.object.editmode_toggle()
+        # add plane object 2
+        bpy.ops.mesh.primitive_plane_add(location=(0, -53, 0),scale=(self.scene_size,20,0))
+        meadow_house_side = bpy.context.active_object
+        #edit plane 2
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.scene_size,20,0))
+        bpy.ops.object.editmode_toggle()
+        meadow_all = [meadow,meadow_house_side]        
+        #add particle system to planes
+        for i in range(len(meadow_all)):
+            ps = meadow_all[i].modifiers.new("grasshair", 'PARTICLE_SYSTEM')
+            ptcsys = meadow_all[i].particle_systems[ps.name]
+            ptcsys.settings.count = 15000 *self.scene_size
+            ptcsys.settings.type = 'HAIR'
+            ptcsys.settings.hair_length = 0.3
+            ptcsys.settings.brownian_factor = 0.3
+            ptcsys.settings.hair_step = 1
+            # assign color to meadow
+            meadow_all[i].data.materials.append(self.meadow_color())        
+
+    # generate meadow color
     def meadow_color(self )-> bpy.types.Material:        
-
         #add material
         material = bpy.data.materials.new("grass")
         material.diffuse_color = (0.029, 0.107, 0.03, 42) # darkish green
@@ -268,93 +288,72 @@ class Environment_Operator(bpy.types.Operator):
 
         return material    
 
-    def generate_meadow(self):
+    # Stone object -------------------------------------------------
+    def generate_stones(self):
+       # get window_manager context to make updating the progress indicator less code
+        Window_Manager = bpy.context.window_manager  
+        # get list of current objects
+        objects_before = bpy.data.objects.values()  
+        # start progress indicator
+        Window_Manager.progress_begin(0,10)
+        # generate number of stones based on user input
+        for index in range(0, self.stones_number):                     
+            # run the actual tree generating code
+            bpy.ops.mesh.primitive_cube_add()
+            stone = bpy.context.object
+            stone.name = "stone"
+            stone_subsurf = stone.modifiers.new("stone structure", "SUBSURF")
+            stone_subsurf.levels = 4
+            bpy.ops.object.modifier_add(type='DISPLACE')
+            # Generate the texture and set the attributes
+            voronoi_tex = bpy.data.textures.new("displace_voronoi", 'VORONOI')
+            voronoi_tex.noise_intensity = .67
+            voronoi_tex.noise_scale = round(random.uniform(0.77, 1.3))
+            voronoi_tex.contrast = .22
+            # Displacement modifier
+            disp_mod = None
+            for modifier in stone.modifiers:
+                if modifier.type == 'DISPLACE':
+                    disp_mod = modifier        
+            if not disp_mod:
+                disp_mod = stone.modifiers.new(name='MyVoronoiDisplace', type='DISPLACE')
+            # Assign the texture
+            disp_mod.texture = voronoi_tex
+            disp_mod.strength = 5
+            disp_mod.vertex_group = "Group"                
+            # update the progress indicator after each tree
+            Window_Manager.progress_update(index)
+            # tell the progress indicator we're finished
+            Window_Manager.progress_end()
+        objects_next = bpy.data.objects.values()
+        newobjects = [object for object in objects_next if object not in objects_before]   
+        # also prepare a list of potentially joined meshes
+        for obj in newobjects:
+            #some operators require selections, so first deselect everything
+            bpy.ops.object.select_all(action='DESELECT')
+            # random rotation of stones
+            obj.rotation_euler[0] = random.uniform(0.1, 5.0)
+            obj.rotation_euler[1] = random.uniform(0.1, 5.0)
+            # random scale of stones
+            obj.scale = (random.randrange(1, 3),random.randrange(1, 3),1)  
+            # random location of stones  
+            x = random.randrange(-self.scene_size, self.scene_size)
+            y = random.randrange(-20, 20)                                    
+            obj.location = (x, y, 1)
+            obj.data.materials.append(self.stone_material())
+        newcol = bpy.data.collections.new("stones collections: ")
+        bpy.context.scene.collection.children.link(newcol)
+        # move new objects into collection
+        for objref in newobjects:
+            # link new object to new collection
+            newcol.objects.link(objref)    
 
-        # add plane
-        bpy.ops.mesh.primitive_plane_add(location=(0, 0, 0),scale=(self.meadow_size,20,0))
-        meadow = bpy.context.active_object
-
-        #edit plane
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,20,0))
-        bpy.ops.object.editmode_toggle()
-
-        bpy.ops.mesh.primitive_plane_add(location=(0, -53, 0),scale=(self.meadow_size,20,0))
-        meadow_house_side = bpy.context.active_object
-
-        #edit plane
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.transform.resize(value=(self.meadow_size,20,0))
-        bpy.ops.object.editmode_toggle()
-
-        meadow_all = [meadow,meadow_house_side]        
-
-        for i in range(len(meadow_all)):
-
-            ps = meadow_all[i].modifiers.new("grasshair", 'PARTICLE_SYSTEM')
-            ptcsys = meadow_all[i].particle_systems[ps.name]
-            ptcsys.settings.count = 15000 *self.meadow_size
-            ptcsys.settings.type = 'HAIR'
-            ptcsys.settings.hair_length = 0.3
-            ptcsys.settings.brownian_factor = 0.3
-            ptcsys.settings.hair_step = 1
-
-            meadow_all[i].data.materials.append(self.meadow_color()) 
-
-    # set some defaults before popping up the dialog, then pop up the dialog
-    def invoke(self, context, event):
-        self.tree_number = 10
-        self.leaf_shape='hex'
-        self.stones_number = 10
-        self.create_collection = True
-
-        return context.window_manager.invoke_props_dialog(self)
-
-    def generate_lantern(self):
-
-        #create Material
-        new_mat = bpy.data.materials.new(name = "My Material")
-        black_mat = bpy.data.materials.new(name="Black")
-        black_mat.diffuse_color=(0,0,0,1)
-    
-        new_mat.use_nodes = True
-        nodes = new_mat.node_tree.nodes
-        material_output = nodes.get("Material Output")
-        node_emission = nodes.new(type='ShaderNodeEmission')
-
-        #glow effect
-        node_emission.inputs[0].default_value = (0.0, 0.1, 1.0, 1 )#colour
-        node_emission.inputs[1].default_value = 500.0 #strength
-
-        links= new_mat.node_tree.links
-        links.new(node_emission.outputs[0], material_output.inputs[0])
-
-        lantern_array = []
-        lantern_lights =[]
-
-        for i in range(round((self.meadow_size/2)-1)):
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 15), -30, 5), scale=( 0.5, 0.5, 10))
-            lantern= bpy.context.active_object 
-            lantern.name='lantern'.format(i) 
-            lantern_array.append(lantern)
-            lantern_array[i].data.materials.append(black_mat)
-
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 15), -30, 10.34), scale=(0.5, 0.5, 0.7))
-            lantern_light= bpy.context.active_object 
-            lantern_light.name='lantern'.format(i) 
-            lantern_lights.append(lantern_light)
-            lantern_lights[i].data.materials.append(new_mat)            
-
-            if lantern_array[i].location[0] > self.meadow_size or lantern_array[i].location[0] < -self.meadow_size:
-                bpy.data.objects.remove( lantern_array[i] )
-                bpy.data.objects.remove( lantern_lights[i] )           
-
-
+    # generate stone color
     def stone_material(self) -> bpy.types.Material:
-
+        # create texture
         stone_mat: bpy.types.Material = bpy.data.materials.new("stones texture")
         stone_mat.use_nodes = True
-
+        # create nodes
         nodes_stone: typing.List[bpy.types.Node] = stone_mat.node_tree.nodes
         node_musgrav: bpy.types.Node = nodes_stone.new("ShaderNodeTexMusgrave")
         node_texcoord: bpy.types.Node = nodes_stone.new("ShaderNodeTexCoord")
@@ -362,10 +361,8 @@ class Environment_Operator(bpy.types.Operator):
         node_noise: bpy.types.Node = nodes_stone.new("ShaderNodeTexNoise")
         node_mix: bpy.types.Node = nodes_stone.new("ShaderNodeMixRGB")
         node_colorramp_1: bpy.types.Node = nodes_stone.new("ShaderNodeValToRGB")
-        node_colorramp_2: bpy.types.Node = nodes_stone.new("ShaderNodeValToRGB")
-                
+        node_colorramp_2: bpy.types.Node = nodes_stone.new("ShaderNodeValToRGB") 
         node_mapping: bpy.types.Node = nodes_stone.new("ShaderNodeMapping")
-
         node_mix.blend_type = 'DIFFERENCE'
         node_bump.inputs[0].default_value = 0.4
         node_musgrav.inputs[2].default_value = .8
@@ -375,127 +372,36 @@ class Environment_Operator(bpy.types.Operator):
         node_noise.inputs[3].default_value = 1.000
         node_noise.inputs[4].default_value = 0.1
         node_noise.inputs[5].default_value = 4.0
-
         node_colorramp_1.color_ramp.elements[0].color = (0.157482, 0.14257, 0.140865, 1)
         node_colorramp_1.color_ramp.elements[1].color =  (0.013177, 0.013177, 0.013177, 1)
-
         node_colorramp_2.color_ramp.elements[1].color =  (0.0406683, 0.0406683, 0.0406683, 1)
         node_colorramp_2.color_ramp.elements[0].color = (0.117462, 0.117462, 0.117462, 1)
-        
         stone_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
-
         stone_mat.node_tree.links.new(node_mapping.outputs[0],node_musgrav.inputs[0])
         stone_mat.node_tree.links.new(node_mapping.outputs[0],node_noise.inputs[0])
-
         stone_mat.node_tree.links.new(node_musgrav.outputs[0],node_mix.inputs[1])
-
         stone_mat.node_tree.links.new(node_noise.outputs[0],node_colorramp_1.inputs[0])
         stone_mat.node_tree.links.new(node_colorramp_1.outputs[0], node_mix.inputs[2])
-
         stone_mat.node_tree.links.new( node_mix.outputs[0],node_colorramp_2.inputs[0])
         stone_mat.node_tree.links.new( node_mix.outputs[0],node_bump.inputs[2])
-
         stone_mat.node_tree.links.new( node_colorramp_2.outputs[0], nodes_stone["Principled BSDF"].inputs[0])
         stone_mat.node_tree.links.new( node_bump.outputs[0], nodes_stone["Principled BSDF"].inputs[20])
 
         return stone_mat
-    
-    def generate_stones(self):
-
-       # get window_manager context to make updating the progress indicator less code
-        Window_Manager = bpy.context.window_manager
-                
-        # get list of current objects
-        objects_before = bpy.data.objects.values()
-                
-        # start progress indicator
-        Window_Manager.progress_begin(0,10)
-
-        for index in range(0, self.stones_number):          
-                            
-            # run the actual tree generating code
-            bpy.ops.mesh.primitive_cube_add()
-            
-            stone = bpy.context.object
-            stone.name = "stone"
-
-            stone_subsurf = stone.modifiers.new("stone structure", "SUBSURF")
-            stone_subsurf.levels = 4
-
-            bpy.ops.object.modifier_add(type='DISPLACE')
-
-            # Generate the texture and set the attributes
-            voronoi_tex = bpy.data.textures.new("displace_voronoi", 'VORONOI')
-            voronoi_tex.noise_intensity = .67
-            voronoi_tex.noise_scale = round(random.uniform(0.77, 1.3))
-            voronoi_tex.contrast = .22
-
-            # Displacement modifier
-            disp_mod = None
-            for modifier in stone.modifiers:
-                if modifier.type == 'DISPLACE':
-                    disp_mod = modifier        
-
-            if not disp_mod:
-                disp_mod = stone.modifiers.new(name='MyVoronoiDisplace', type='DISPLACE')
-
-            # Assign the texture
-            disp_mod.texture = voronoi_tex
-            disp_mod.strength = 5
-            disp_mod.vertex_group = "Group"
-                                    
-            # update the progress indicator after each tree
-            Window_Manager.progress_update(index)
-                
-            # tell the progress indicator we're finished
-            Window_Manager.progress_end()
-
-        objects_next = bpy.data.objects.values()
-        newobjects = [object for object in objects_next if object not in objects_before]   
-
-        # also prepare a list of potentially joined meshes
-        for obj in newobjects:
-
-            #some operators require selections, so first deselect everything
-            bpy.ops.object.select_all(action='DESELECT')
-
-            obj.rotation_euler[0] = random.uniform(0.1, 5.0)
-            obj.rotation_euler[1] = random.uniform(0.1, 5.0)
-            obj.scale = (random.randrange(1, 3),random.randrange(1, 3),1)    
-
-            x = random.randrange(-self.meadow_size, self.meadow_size)
-            y = random.randrange(-20, 20)
-                                                    
-            obj.location = (x, y, 1)
-            obj.data.materials.append(self.stone_material())
-
-        newcol = bpy.data.collections.new("stones collections: ")
-        bpy.context.scene.collection.children.link(newcol)
-
-        # move new objects into collection
-        for objref in newobjects:
-            # link new object to new collection
-            newcol.objects.link(objref)
-
         
+    # Tree objects------------------------------------------------------------    
     def generate_trees(self):
-
          # get window_manager context to make updating the progress indicator less code
         Window_Manager = bpy.context.window_manager
-        
         # get list of current objects
         objects_before = bpy.data.objects.values()
-         
         # start progress indicator
         Window_Manager.progress_begin(0, self.tree_number)
-
         # generate a number of trees
-        for index in range(0, self.tree_number):            
-                        
+        for index in range(0, self.tree_number):                     
             # use Sapling's own ImportData class to read the preset files into the "settings" list
             add_curve_sapling.ImportData.filename = self.presets
             add_curve_sapling.ImportData.execute(add_curve_sapling.ImportData, bpy.context)
-            
             # have to override the preset values after reading them
             if add_curve_sapling.settings["levels"] > self.max_branch_levels:
                 add_curve_sapling.settings["levels"] =  self.max_branch_levels
@@ -523,10 +429,8 @@ class Environment_Operator(bpy.types.Operator):
             )
             # update the progress indicator after each tree
             Window_Manager.progress_update(index)
-        
         # tell the progress indicator we're finished
         Window_Manager.progress_end()
-            
         # set up basic materials
         if self.materials:
             # trunk
@@ -534,46 +438,35 @@ class Environment_Operator(bpy.types.Operator):
             trunk_material.diffuse_color = (0.064, 0.001, 0.001, 25) # dark brown
             trunk_material.roughness = 5.0
             trunk_material.specular_intensity = 1.0
-            
             # leaves
             leaf_material = bpy.data.materials.new("Sapling Leaves")
             leaf_material.diffuse_color = (0.034, 0.089, 0.058, 35) # darkish green
             leaf_material.roughness = 0.4
             leaf_material.specular_intensity = 0.5
-
         # since we cannot tell Sapling where to put its new trees, we have to iterate through all new "tree" objects
         # and move them randomly after generating them
-        
         # make object list after generating
         objects_next = bpy.data.objects.values()
         newobjects = [object for object in objects_next if object not in objects_before]     
-
         # also prepare a list of potentially joined meshes
         for obj in newobjects:
-            
             # some operators require selections, so first deselect everything
             bpy.ops.object.select_all(action='DESELECT')
-            
             # process trunks
             if obj.type == 'CURVE':
-
-                x = random.randrange(-self.meadow_size, self.meadow_size)
-                y = random.randrange(-20, 20)
-                                                         
+                # random location of trees
+                x = random.randrange(-self.scene_size, self.scene_size)
+                y = random.randrange(-20, 20)                                    
                 obj.location = (x, y, 0)
-                    
                 if self.materials:
                     obj.data.materials.append(trunk_material)            
-            
             # leaves
             if obj.type == 'MESH' and self.materials:
                 obj.data.materials.append(leaf_material)
-         
         if self.create_collection:
             # make new collection
             newcol = bpy.data.collections.new("Environment collections: ")
             bpy.context.scene.collection.children.link(newcol)
-
             # move new objects into collection
             for objref in newobjects:
                 # link new object to new collection
@@ -581,17 +474,45 @@ class Environment_Operator(bpy.types.Operator):
                 # remove object from scene collection
                 bpy.context.scene.collection.objects.unlink(objref)
 
-    def add_fence_texture_vertical(self) -> bpy.types.Material:
+    # Fence object-------------------------------------------------------
+    def generate_fence(self):
+        # fence attributes
+        fence_z = 10
+        fence_scale_y = 0.2
+        fence_scalet_z = 0.95
+        fence_vertical_z = 5
+        fence_vertical_scale_x = 0.8
+        fence_vertical_scale_y = 0.6
+        fence_vertical_scalet_z = 5
+        fences_horinzontal = []
+        fences_vertical = []
+        # generate vertical fence components
+        for i in range(round((self.scene_size/2)-1)):
+            bpy.ops.mesh.primitive_cube_add(location=(-self.scene_size + (i * 5), -33, fence_vertical_z*0.5), scale=(fence_vertical_scale_x, fence_vertical_scale_y, fence_vertical_scalet_z))
+            fence= bpy.context.active_object 
+            fence.name = "fence_vertical".format(i) 
+            fences_vertical.append(fence)
+            fences_vertical[i].data.materials.append(self.add_fence_texture_vertical())
+            if fences_vertical[i].location[0] > self.scene_size or fences_vertical[i].location[0] < -self.scene_size:
+                bpy.data.objects.remove( fences_vertical[i] )
+        # generate horizontal fence components
+        for i in range(2):
+            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (fence_z/2.5) - (2 * i)), scale=(self.scene_size*2, fence_scale_y, fence_scalet_z))
+            fence= bpy.context.active_object
+            fence.name = "fence_horinzontal".format(i)  
+            fences_horinzontal.append(fence)
+            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())   
 
+    # add vertical fence texture
+    def add_fence_texture_vertical(self) -> bpy.types.Material:
         #add material
         fence_mat: bpy.types.Material = bpy.data.materials.new("fence material")
         fence_mat.use_nodes = True
-
+        #create nodes
         nodes_fence: typing.List[bpy.types.Node] = fence_mat.node_tree.nodes
         node_musgrave: bpy.types.Node = nodes_fence.new("ShaderNodeTexMusgrave")
         node_texvoronoi: bpy.types.Node = nodes_fence.new("ShaderNodeTexVoronoi")
         node_texnoise: bpy.types.Node = nodes_fence.new("ShaderNodeTexNoise")
-
         node_texnoise.inputs[4].default_value = 1   
         nodes_fence["Principled BSDF"].inputs[0].default_value = (0.455477, 0.463941, 0.489882, 1)
         nodes_fence["Principled BSDF"].inputs[5].default_value = 0
@@ -601,76 +522,50 @@ class Environment_Operator(bpy.types.Operator):
         fence_mat.node_tree.links.new(node_texnoise.outputs[0], nodes_fence["Material Output"].inputs[2])
         
         return fence_mat
-
+    # create horizontal fence texture
     def add_fence_texture_horizontal(self) -> bpy.types.Material:
-
         #add material
         fence_mat: bpy.types.Material = bpy.data.materials.new("fence material")
         fence_mat.use_nodes = True
-
+        # create nodes
         nodes_fence: typing.List[bpy.types.Node] = fence_mat.node_tree.nodes
         node_musgrave: bpy.types.Node = nodes_fence.new("ShaderNodeTexMusgrave")
         node_texvoronoi: bpy.types.Node = nodes_fence.new("ShaderNodeTexVoronoi")
         node_texnoise: bpy.types.Node = nodes_fence.new("ShaderNodeTexNoise")
-
         node_texnoise.inputs[4].default_value = 1   
         nodes_fence["Principled BSDF"].inputs[0].default_value = (0.0187184, 0.00194077, 0.00739711, 1)
         nodes_fence["Principled BSDF"].inputs[5].default_value = 0
         nodes_fence["Principled BSDF"].inputs[7].default_value = 0.9
-
         fence_mat.node_tree.links.new(node_musgrave.outputs[0], node_texvoronoi.inputs[0])
         fence_mat.node_tree.links.new(node_texvoronoi.outputs[0], nodes_fence["Principled BSDF"].inputs[4])
         fence_mat.node_tree.links.new(node_texnoise.outputs[0], nodes_fence["Material Output"].inputs[2])
         
         return fence_mat
 
+    # Cloud object
+    def generate_clouds(self):
+        # create cubes as base objects
+        bpy.ops.mesh.primitive_cube_add(location=(0, 0, 35),scale=(self.scene_size*2,50, 3))
+        cloud1 = bpy.context.object
+        bpy.ops.mesh.primitive_cube_add(location=(0, -53, 35),scale=(self.scene_size*2,50, 3))
+        cloud2= bpy.context.object
+        cloud1.name = "cloud1"
+        cloud2.name = "cloud2"
+        # add cloud textures
+        cloud1.data.materials.append(self.cloud_material())
+        cloud2.data.materials.append(self.cloud_material())    
 
-    def generate_fence(self):
-
-        fence_z = 10
-
-        fence_scale_y = 0.2
-        fence_scalet_z = 0.95
-
-        fence_vertical_z = 5
-
-        fence_vertical_scale_x = 0.8
-        fence_vertical_scale_y = 0.6
-        fence_vertical_scalet_z = 5
-
-        fences_horinzontal = []
-
-        fences_vertical = []
-
-        for i in range(round((self.meadow_size/2)-1)):
-            bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size + (i * 5), -33, fence_vertical_z*0.5), scale=(fence_vertical_scale_x, fence_vertical_scale_y, fence_vertical_scalet_z))
-            fence= bpy.context.active_object 
-            fence.name = "fence_vertical".format(i) 
-            fences_vertical.append(fence)
-            fences_vertical[i].data.materials.append(self.add_fence_texture_vertical())
-            if fences_vertical[i].location[0] > self.meadow_size or fences_vertical[i].location[0] < -self.meadow_size:
-                bpy.data.objects.remove( fences_vertical[i] )
-
-        for i in range(2):
-            bpy.ops.mesh.primitive_cube_add(location=(0, -33,  (fence_z/2.5) - (2 * i)), scale=(self.meadow_size*2, fence_scale_y, fence_scalet_z))
-            fence= bpy.context.active_object
-            fence.name = "fence_horinzontal".format(i)  
-            fences_horinzontal.append(fence)
-            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())   
-
+    # generate cloud material
     def cloud_material(self) -> bpy.types.Material:
-
         cloud_mat: bpy.types.Material = bpy.data.materials.new("clouds texture")
         cloud_mat.use_nodes = True
-        
         #Get the node in its node tree (replace the name below)
         node_to_delete =  cloud_mat.node_tree.nodes['Principled BSDF']
         node_material =  cloud_mat.node_tree.nodes['Material Output']
-
         #Remove it
         cloud_mat.node_tree.nodes.remove( node_to_delete )
         cloud_mat.node_tree.nodes.remove( node_material)
-
+        # create nodes
         nodes_cloud: typing.List[bpy.types.Node] = cloud_mat.node_tree.nodes
         node_math: bpy.types.Node = nodes_cloud.new("ShaderNodeMath")
         node_colorramp: bpy.types.Node = nodes_cloud.new("ShaderNodeValToRGB")
@@ -681,138 +576,259 @@ class Environment_Operator(bpy.types.Operator):
         node_mapping: bpy.types.Node = nodes_cloud.new("ShaderNodeMapping")
         node_volume: bpy.types.Node = nodes_cloud.new("ShaderNodeVolumePrincipled")
         node_matoutput: bpy.types.Node = nodes_cloud.new("ShaderNodeOutputMaterial")
-
         node_volume.inputs[0].default_value = (1, 1, 1, 1)
-
         node_math.operation = 'MULTIPLY'
         node_math.inputs[1].default_value = 1000
-
         node_colorramp.color_ramp.elements[0].color = (0, 0, 0, 1)
         node_colorramp.color_ramp.elements[0].position = 0.709
         node_colorramp.color_ramp.elements[1].color = (1, 1, 1, 1)
-
         node_noise_1.inputs[5].default_value = 2
-
         node_noise_1.inputs[2].default_value = 2.4
         node_noise_2.inputs[2].default_value = 2.4
-
         node_mix.blend_type = 'MIX'
         node_mix.inputs[0].default_value = 0.8
-
         cloud_mat.node_tree.links.new(node_colorramp.outputs[0], node_math.inputs[0])
         cloud_mat.node_tree.links.new(node_noise_1.outputs[0], node_colorramp.inputs[0])
         cloud_mat.node_tree.links.new(node_mix.outputs[0], node_noise_1.inputs[0])
         cloud_mat.node_tree.links.new(node_mapping.outputs[0], node_mix.inputs[1])
-        
         cloud_mat.node_tree.links.new(node_noise_2.outputs[1], node_mix.inputs[2])
         cloud_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
-        
         cloud_mat.node_tree.links.new(node_texcoord.outputs[3], node_noise_2.inputs[0])
         cloud_mat.node_tree.links.new( node_math.outputs[0], node_volume.inputs[2])
         cloud_mat.node_tree.links.new( node_volume.outputs[0], node_matoutput.inputs[1])
 
         return cloud_mat
 
-    def generate_clouds(self):
-
-        # run the actual tree generating code
-        bpy.ops.mesh.primitive_cube_add(location=(0, 0, 35),scale=(self.meadow_size*2,50, 3))
-        cloud1 = bpy.context.object
-        bpy.ops.mesh.primitive_cube_add(location=(0, -53, 35),scale=(self.meadow_size*2,50, 3))
-        cloud2= bpy.context.object
-                    
-        cloud1.name = "cloud"
-        cloud2.name = "cloud"
-
-        cloud1.data.materials.append(self.cloud_material())
-        cloud2.data.materials.append(self.cloud_material())    
-
+    # House object-------------------------------------------------------
     def generate_houses(self):
-
-        boolean = self.random_floors
+        # house attributes
+        boolean = self.random_house_height
         house_size_x = 20
         house_size_y = 15
-        house_size_z = 10
-
+        house_size_z = 15
         house_loc_y = -53
         house_loc_x = 5
         house_loc_z = house_size_z * 0.5
-
         garage_size_x = 12
         garage_size_y = 15
         garage_size_z = 8
-
         garage_loc_y = -53
         garage_loc_x = house_loc_x - house_size_x * 0.75
         garage_loc_z = garage_size_z * 0.5
-
         ground_size_x = 21
         ground_size_y = 31
         ground_size_z = 1
-
         ground_loc_x = -2.75
         ground_loc_y = -63
         ground_loc_z = 0.95
-
         house_door_size_x = 0.5
         house_door_size_y = 3
-        house_door_size_z = 4
-
-        if self.meadow_size >= 50 and self.meadow_size < 75:
+        house_door_size_z = 8
+        garage_door_size_x = 0.5
+        garage_door_size_y = 10
+        garage_door_size_z = 5
+        # generate number of houses based on scene size
+        if self.scene_size >= 50 and self.scene_size < 75:
             number_houses = 2
-        elif self.meadow_size is 75:
+        elif self.scene_size is 75:
             number_houses = 3
         else:
             number_houses = 1
-
-        diff = self.meadow_size - 25
-
+        # materials for doors and ground
+        black_mat = bpy.data.materials.new(name="Black")
+        black_mat.diffuse_color=(0,0,0,1)
+        grey_mat = bpy.data.materials.new(name="Grey")
+        grey_mat.diffuse_color=(0.110518, 0.105209, 0.125965, 1)
+        # generate houses based on number of houses
         for i in range(number_houses):
+                # one house
                 if number_houses == 1:
                     i = 0.5
-                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2  + (i * 50), house_loc_y, house_loc_z),scale=(house_size_x, house_size_y, house_size_z))
+                bpy.ops.mesh.primitive_cube_add(location=(-self.scene_size/2  + (i * 50), house_loc_y, house_loc_z),scale=(house_size_x, house_size_y, house_size_z))
                 house = bpy.context.object
                 house.rotation_euler = (0 , 0 ,1.5708 )
-
+                house.data.materials.append(self.building_material())
+                # different house size based on user input
                 if  boolean:
                     #extrudien
                     bpy.ops.object.mode_set( mode   = 'EDIT'   )
                     bpy.ops.mesh.select_mode( type  = 'FACE'   )
                     bpy.ops.mesh.select_all( action = 'SELECT' )
-
                     bpy.ops.mesh.extrude_region_move(
                     TRANSFORM_OT_translate={"value":(0, 0, random.randrange(4,15))})
-
                 else:
                     bpy.ops.object.mode_set( mode   = 'EDIT'   )
                     bpy.ops.mesh.select_mode( type  = 'FACE'   )
                     bpy.ops.mesh.select_all( action = 'SELECT' )
-
                     bpy.ops.mesh.extrude_region_move(
                     TRANSFORM_OT_translate={"value":(0, 0, 3)})
                 bpy.ops.object.mode_set( mode = 'OBJECT' )
-
-                bpy.ops.mesh.primitive_cube_add(scale=(house_door_size_x, house_door_size_y, house_door_size_z),location=(  -self.meadow_size/2  + (i * 50), -63, house_door_size_z*0.5))
-                door = bpy.context.object
-                door.rotation_euler = (0 , 0 ,1.5708 )
-
-                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -15, garage_loc_y, garage_loc_z),scale=(garage_size_x, garage_size_y, garage_size_z))
+                # side windows
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50)) +7.5, -58 , 7))
+                side_window_1 = bpy.context.object
+                side_window_1.name = "side_window_1"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50))+7.5, -48 , 7))
+                side_window_2 = bpy.context.object
+                side_window_2.name = "side_window_2"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50))+7.5, -58 , 14))
+                side_window_3 = bpy.context.object
+                side_window_3.name = "side_window_3"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50))+7.5, -48 , 14))
+                side_window_4 = bpy.context.object
+                side_window_4.name = "side_window_4"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50)) -7.5, -58 , 14))
+                side_window_5 = bpy.context.object
+                side_window_5.name = "side_window_5"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.scene_size/2  + (i * 50))-7.5, -48 , 14))
+                side_window_6 = bpy.context.object
+                side_window_6.name = "side_window_6"
+                # front winodws
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5, -63, 7))
+                front_window_1 = bpy.context.object
+                front_window_1.rotation_euler = (0 , 0 ,1.5708 )
+                front_window_1.name = "front_window_1"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)-4.5, -63, 7))
+                front_window_2 = bpy.context.object
+                front_window_2.rotation_euler = (0 , 0 ,1.5708 )
+                front_window_2.name = "front_window_2"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5, -63, 14))
+                front_window_3 = bpy.context.object
+                front_window_3.rotation_euler = (0 , 0 ,1.5708 )
+                front_window_3.name = "front_window_3"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)-4.5, -63, 14))
+                front_window_4 = bpy.context.object
+                front_window_4.rotation_euler = (0 , 0 ,1.5708 )
+                front_window_4.name = "front_window_4"
+                # back windows
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5, -43, 7))
+                back_window_1 = bpy.context.object
+                back_window_1.rotation_euler = (0 , 0 ,1.5708 )
+                back_window_1.name = "back_window_1"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5 -9, -43, 7))
+                back_window_2 = bpy.context.object
+                back_window_2.rotation_euler = (0 , 0 ,1.5708 )
+                back_window_2.name = "back_window_2"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5 , -43, 14))
+                back_window_3 = bpy.context.object
+                back_window_3.rotation_euler = (0 , 0 ,1.5708 )
+                back_window_3.name = "back_window_3"
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  -self.scene_size/2  + (i * 50)+4.5-9, -43, 14))
+                back_window_4 = bpy.context.object
+                back_window_4.rotation_euler = (0 , 0 ,1.5708 )
+                back_window_4.name = "back_window_4"
+                # side window materials
+                side_window_1.data.materials.append(self.mirror_material())  
+                side_window_2.data.materials.append(self.mirror_material())
+                side_window_3.data.materials.append(self.mirror_material()) 
+                side_window_4.data.materials.append(self.mirror_material())
+                side_window_5.data.materials.append(self.mirror_material())  
+                side_window_6.data.materials.append(self.mirror_material())
+                # front window materials
+                front_window_1.data.materials.append(self.mirror_material()) 
+                front_window_2.data.materials.append(self.mirror_material())
+                front_window_3.data.materials.append(self.mirror_material())
+                front_window_4.data.materials.append(self.mirror_material())
+                # back window materials
+                back_window_1.data.materials.append(self.mirror_material())
+                back_window_2.data.materials.append(self.mirror_material())
+                back_window_3.data.materials.append(self.mirror_material())
+                back_window_4.data.materials.append(self.mirror_material())
+                # front door creation
+                bpy.ops.mesh.primitive_cube_add(scale=(house_door_size_x, house_door_size_y, house_door_size_z),location=(  -self.scene_size/2  + (i * 50), -63, house_door_size_z*0.5))
+                frontdoor = bpy.context.object
+                frontdoor.rotation_euler = (0 , 0 ,1.5708 )
+                frontdoor.data.materials.append(black_mat)
+                # back door creation
+                bpy.ops.mesh.primitive_cube_add(scale=(house_door_size_x, house_door_size_y, house_door_size_z),location=(  -self.scene_size/2  + (i * 50), -43, house_door_size_z*0.5))
+                door_behind = bpy.context.object
+                door_behind.rotation_euler = (0 , 0 ,1.5708 )
+                door_behind.data.materials.append(black_mat)
+                # garage creation
+                bpy.ops.mesh.primitive_cube_add(location=(-self.scene_size/2 +  (i * 50) -15, garage_loc_y, garage_loc_z),scale=(garage_size_x, garage_size_y, garage_size_z))
                 garage = bpy.context.object
                 garage.rotation_euler = (0 , 0 ,1.5708 )
-
-                bpy.ops.mesh.primitive_cube_add(location=(-self.meadow_size/2 +  (i * 50) -7, ground_loc_y, ground_loc_z),scale=(ground_size_x, ground_size_y, ground_size_z))
+                garage.data.materials.append(self.building_material())
+                # garage door creation
+                bpy.ops.mesh.primitive_cube_add(scale=(garage_door_size_x , garage_door_size_y , garage_door_size_z ),location=(-self.scene_size/2 +  (i * 50) -15, -58.9755, 4))
+                garage_door = bpy.context.object
+                garage_door.rotation_euler = (0 , 0 ,1.5708 )
+                garage_door.data.materials.append(black_mat)
+                # ground creation
+                bpy.ops.mesh.primitive_cube_add(location=(-self.scene_size/2 +  (i * 50) -7, ground_loc_y, ground_loc_z),scale=(ground_size_x, ground_size_y, ground_size_z))
                 ground = bpy.context.object
                 ground.rotation_euler = (0 , 0 ,1.5708 )
-          
-    
-    # Run the actual code upon pressing "OK" on the dialog
-    def execute(self, context):
+                ground.data.materials.append(grey_mat)
 
+    # generate house building material
+    def building_material(self) -> bpy.types.Material:
+        # define material
+        building_mat: bpy.types.Material = bpy.data.materials.new("Water Material")
+        building_mat.use_nodes = True
+        # create nodes
+        nodes_building: typing.List[bpy.types.Node] = building_mat.node_tree.nodes
+        node_musgrav: bpy.types.Node = nodes_building.new("ShaderNodeTexMusgrave")
+        node_texcoord: bpy.types.Node = nodes_building.new("ShaderNodeTexCoord")
+        node_bump: bpy.types.Node = nodes_building.new("ShaderNodeBump")
+        node_noise: bpy.types.Node = nodes_building.new("ShaderNodeTexNoise")
+        node_mix: bpy.types.Node = nodes_building.new("ShaderNodeMixRGB")
+        node_colorramp_1: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")
+        node_colorramp_2: bpy.types.Node = nodes_building.new("ShaderNodeValToRGB")
+        node_mapping: bpy.types.Node = nodes_building.new("ShaderNodeMapping")
+        node_mix.blend_type = 'DIFFERENCE'
+        node_bump.inputs[0].default_value = 0.3
+        node_musgrav.inputs[3].default_value = 21.000
+        node_musgrav.inputs[3].default_value = 0
+        node_noise.inputs[2].default_value = 6.000
+        node_noise.inputs[3].default_value = 16.000
+        node_noise.inputs[4].default_value = 0.1
+        node_noise.inputs[5].default_value = 4.0
+        node_colorramp_1.color_ramp.elements[0].color = (0.11,random.uniform(0.5, 1.5), random.uniform(0.5, 1.5), 1)
+        node_colorramp_1.color_ramp.elements[1].color =  (0.781435, 0.781435, 0.781435, 1)
+        node_colorramp_2.color_ramp.elements[1].color = (0.875713, 0.875713, 0.875713, 1)
+        node_colorramp_2.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+        building_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
+        building_mat.node_tree.links.new(node_mapping.outputs[0],node_musgrav.inputs[0])
+        building_mat.node_tree.links.new(node_mapping.outputs[0],node_noise.inputs[0])
+        building_mat.node_tree.links.new(node_musgrav.outputs[0],node_mix.inputs[1])
+        building_mat.node_tree.links.new(node_noise.outputs[0],node_colorramp_1.inputs[0])
+        building_mat.node_tree.links.new(node_colorramp_1.outputs[0], node_mix.inputs[2])
+        building_mat.node_tree.links.new( node_mix.outputs[0],node_colorramp_2.inputs[0])
+        building_mat.node_tree.links.new( node_mix.outputs[0],node_bump.inputs[2])
+        building_mat.node_tree.links.new( node_colorramp_2.outputs[0], nodes_building["Principled BSDF"].inputs[0])
+        building_mat.node_tree.links.new( node_bump.outputs[0], nodes_building["Principled BSDF"].inputs[20])
+
+        return building_mat
+
+    # mirror material for widows
+    def mirror_material(self) -> bpy.types.Material:
+        # create material
+        mirror_mat: bpy.types.Material = bpy.data.materials.new("mirrors texture")
+        mirror_mat.use_nodes = True
+        #Get the node in its node tree (replace the name below)
+        node_to_delete =  mirror_mat.node_tree.nodes['Principled BSDF']
+        node_old_mat=  mirror_mat.node_tree.nodes['Material Output']
+        #Remove it
+        mirror_mat.node_tree.nodes.remove( node_to_delete )
+        mirror_mat.node_tree.nodes.remove( node_old_mat)
+        # create nodes
+        nodes_mirror: typing.List[bpy.types.Node] = mirror_mat.node_tree.nodes
+        node_glassbsdf: bpy.types.Node = nodes_mirror.new("ShaderNodeBsdfGlass")
+        node_matoutput: bpy.types.Node = nodes_mirror.new("ShaderNodeOutputMaterial")
+        node_glassbsdf.inputs[0].default_value = (0.467679, 0.803215, 1, 1)
+        node_glassbsdf.inputs[1].default_value = 0.115385
+        node_glassbsdf.inputs[2].default_value = 15.15
+        mirror_mat.node_tree.links.new( node_glassbsdf.outputs[0], node_matoutput.inputs[0])
+
+        return mirror_mat
+
+    # Run the actual code upon pressing "OK" on the dialog------------------------------
+    def execute(self, context):
+        # clear scene befor generating objects
         bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
         bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
         bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.
         bpy.ops.object.select_all(action='DESELECT')
-
+        # generate objects
         self.generate_houses()
         self.generate_fence()
         self.generate_meadow()
@@ -828,6 +844,7 @@ class Environment_Operator(bpy.types.Operator):
         
         return {'FINISHED'}
 
+# classes of addon
 classes = [Environment_Panel,Environment_Operator]
 
 def register():
