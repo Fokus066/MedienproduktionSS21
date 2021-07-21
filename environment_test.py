@@ -895,11 +895,11 @@ class Environment_Operator(bpy.types.Operator):
                 side_window_4 = bpy.context.object
                 side_window_4.name = "side_window_4"
 
-                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.meadow_size/2  + (i * 50)) -8, -58 , 14))
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.meadow_size/2  + (i * 50)) -7.5, -58 , 14))
                 side_window_5 = bpy.context.object
                 side_window_5.name = "side_window_5"
 
-                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.meadow_size/2  + (i * 50))-8, -48 , 14))
+                bpy.ops.mesh.primitive_cube_add(scale=(0.5, 3, 3),location=(  (-self.meadow_size/2  + (i * 50))-7.5, -48 , 14))
                 side_window_6 = bpy.context.object
                 side_window_6.name = "side_window_6"
 
