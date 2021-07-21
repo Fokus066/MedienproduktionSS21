@@ -1,11 +1,13 @@
 import bpy, typing
+import bmesh 
 
 class house: 
 
+
     number_of_floors = 2
 
-    groundX = 40
-    groundY= 40
+    groundX = 20
+    groundY= 30
     groundZ= 0.5
 
     housemainX = 20
@@ -24,36 +26,12 @@ class house:
     patio_size_y = 3.5
     patio_size_z = 4
 
-    garagedoor_size_x = 10
+
+
+    garagedoor_size_x = 0.3
     garagedoor_size_y = 4.5
     garagedoor_size_z = 4
    
-    def mirror_material(self) -> bpy.types.Material:
-
-        mirror_mat: bpy.types.Material = bpy.data.materials.new("mirrors texture")
-        mirror_mat.use_nodes = True
-        
-        #Get the node in its node tree (replace the name below)
-        node_to_delete =  mirror_mat.node_tree.nodes['Principled BSDF']
-        node_old_mat=  mirror_mat.node_tree.nodes['Material Output']
-
-        #Remove it
-        mirror_mat.node_tree.nodes.remove( node_to_delete )
-        mirror_mat.node_tree.nodes.remove( node_old_mat)
-
-        nodes_mirror: typing.List[bpy.types.Node] = mirror_mat.node_tree.nodes
-        node_glassbsdf: bpy.types.Node = nodes_mirror.new("ShaderNodeBsdfGlass")
-        node_matoutput: bpy.types.Node = nodes_mirror.new("ShaderNodeOutputMaterial")
-
-        node_glassbsdf.inputs[0].default_value = (0.467679, 0.803215, 1, 1)
-        node_glassbsdf.inputs[1].default_value = 0.115385
-        node_glassbsdf.inputs[2].default_value = 15.15
-        
-
-
-        mirror_mat.node_tree.links.new( node_glassbsdf.outputs[0], node_matoutput.inputs[0])
-
-        return mirror_mat
 
     def building_material(self) -> bpy.types.Material:
 
@@ -85,6 +63,7 @@ class house:
         
         node_colorramp_2.color_ramp.elements[1].color = (0.875713, 0.875713, 0.875713, 1)
         node_colorramp_2.color_ramp.elements[0].color = (0.480457, 0.480457, 0.480457, 1)
+        
 
         building_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
 
@@ -107,8 +86,9 @@ class house:
 
     def generate_building(self):
 
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(30, 0,  self.housemainZ * 0.5), scale=(self.housemainX, self.housemainY,self.housemainZ))
 
+        
         if  self.number_of_floors == 2:
             #extrudien
             bpy.ops.object.mode_set( mode   = 'EDIT'   )
@@ -131,29 +111,65 @@ class house:
         bpy.ops.object.mode_set( mode = 'OBJECT' )
              # extrudieren Face skalieren (ops transforn resize auf einer achse) 
         mainhouse = bpy.context.object
-
+        mainhouse.name = "mainhouse"
         mainhouse.data.materials.append(self.building_material()) 
 
-        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(self.garageX*0.33, self.garageY ,self.garageZ * 0.5), scale=(self.garageX, self.garageY, self.garageZ))
+
+
+        #Garage
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=( bpy.data.objects['mainhouse'].location.x+3.96 , bpy.data.objects['mainhouse'].location.y+15, bpy.data.objects['mainhouse'].location.z-2), scale=(self.garageX, self.garageY, self.garageZ))
 
         garage = bpy.context.object
-        garage.name = "garage"
         garage.data.materials.append(self.building_material()) 
 
-        bpy.ops.mesh.primitive_cube_add(scale=(self.garagedoor_size_x, self.garagedoor_size_y, self.garagedoor_size_z),location=( self.housemainX *0.5 , self.housemainY , self.garagedoor_size_z*0.5))
+       
 
-        garagedoor1 =  bpy.context.object
 
-        modifier_bool = garage.modifiers.new("Bool", "BOOLEAN")
-        modifier_bool.object = garagedoor1
+        door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=(  bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y, bpy.data.objects['mainhouse'].location.z-3))
+       
+        
 
-        #bpy.data.objects.remove( garagedoor1)
+        patio1 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=(  bpy.data.objects['mainhouse'].location.x-5 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z-3))
+        patio2 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( bpy.data.objects['mainhouse'].location.x-10 , bpy.data.objects['mainhouse'].location.y+4.95, bpy.data.objects['mainhouse'].location.z-3))
+        patio3 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( bpy.data.objects['mainhouse'].location.x+3 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+3))
 
-        door1 = bpy.ops.mesh.primitive_cube_add(scale=(self.door_size_x, self.door_size_y, self.door_size_z),location=( self.housemainX *0.5 , 0, self.door_size_z*0.5))
+        garagedoor1 = bpy.ops.mesh.primitive_cube_add(scale=(self.garagedoor_size_x, self.garagedoor_size_y, self.garagedoor_size_z),location=(  bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y+15, bpy.data.objects['mainhouse'].location.z-3))
+        garage = bpy.context.object
+        garage.name = "garage"
+        # objects = bpy.data.objects
+        # a = objects['mainhouse']
+        # b = objects['garage']
+        # a.parent = b
 
-        patio1 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_x, self.patio_size_y, self.patio_size_z),location=( self.housemainX *-0.5 , self.housemainY *0.33, self.housemainZ*0.2))
-        patio2 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *-0.25 , self.housemainY *0.5, self.housemainZ*0.2))
-        patio3 = bpy.ops.mesh.primitive_cube_add(scale=(self.patio_size_y, self.patio_size_x, self.patio_size_z),location=( self.housemainX *0.2 , self.housemainY *0.5, self.housemainZ*0.8))
+    
+
+    def generate_ground(self):
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(bpy.data.objects['mainhouse'].location.x+20, bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z-5.0), scale=(self.groundX, self.groundY, self.groundZ))
+        
+        ground = bpy.context.object
+        ground.name = "ground"
+        new_mat = bpy.data.materials.new(name = "Wood Floor")
+        ground.data.materials.append(new_mat)
+
+        new_mat.use_nodes = True
+        nodes = new_mat.node_tree.nodes
+
+            #Operators
+        principled_node = nodes.get('Principled BSDF')
+
+            #load image to node
+            # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+        bpy.ops.image.open(filepath="/Users/Vinzenz/Documents/MedienProd/Materials/Boden/granite.jpg")
+        my_image_node = nodes.new("ShaderNodeTexImage")
+        my_image_node.image = bpy.data.images["granite.jpg"]
+        #new_mat = bpy.data.materials.new(name = "Wood Floor")
+            #linking the nodes
+        links = new_mat.node_tree.links
+        links.new(my_image_node.outputs[0], principled_node.inputs[0])    
+
+        
+
+
 
     def generate_Window(self):
 
@@ -165,103 +181,87 @@ class house:
         sidewindows_size_y = 0.5
         sidewindows_size_z = 3
         
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
-        window1 = bpy.context.object
-        window1.name = "window1"
         
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90))
-        window2 = bpy.context.object
-           
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90))
-        window3 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90))
-        window4 = bpy.context.object
-        
+        window1 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x-10 , bpy.data.objects['mainhouse'].location.y+3.75, bpy.data.objects['mainhouse'].location.z+4))
+        window2 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=(  bpy.data.objects['mainhouse'].location.x-10 , bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z+4))
+        window3 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x-10 , bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z))
 
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90))
-        window5 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90))
-        window6 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90))
-        window7 = bpy.context.object
-        
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90-5))
-        window8 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90-5))
-        window9 = bpy.context.object
-        
+
+        window4 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x-6.6 , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+4))
+        window5 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x+0, bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+4))
+        window6 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x+6.6, bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+4))
+        window7 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x-6.6, bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z))        
+        window8 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z))
+        window9 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( bpy.data.objects['mainhouse'].location.x+6.6 , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z))
        
-        bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90-5))
-        window11 = bpy.context.object
+        window11 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z+4))
+        window12 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y+3.75, bpy.data.objects['mainhouse'].location.z+4))
+        window13 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z))
+        window14 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y +3.75, bpy.data.objects['mainhouse'].location.z))
+
+        window15 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x -1 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+4))
+        window16 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x+7.2 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+4))
         
 
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90-5))
-        window12 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90-5))
-        window13 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90-5))
-        window14 = bpy.context.object
-        
 
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, self.housemainY*0.5, self.housemainZ*0.9))
-        window15 = bpy.context.object
-        
-        bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( -self.housemainX*0.33, self.housemainY*0.5, self.housemainZ*0.9))
-        window16 = bpy.context.object
-        
-        
         windows = [window1,window2,window3,window4,window5,window6,window7,window8,window9,window11,window12,window13,window14,window15,window16]
+        windows = bpy.context.object
+        windows.name = "windows"
 
-        for index in range(len(windows)):
-            windows[index].data.materials.append(self.mirror_material()) 
+        
+
 
         if  self.number_of_floors == 2:
 
             
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( -self.housemainX*0.33, self.housemainY*0.5, self.housemainZ*1.4))
-            window17 = bpy.context.object
+            window17 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=(bpy.data.objects['mainhouse'].location.x-10 , bpy.data.objects['mainhouse'].location.y+3.75, bpy.data.objects['mainhouse'].location.z+9))
+            window18 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=(bpy.data.objects['mainhouse'].location.x-10, bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z+9))
 
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, self.housemainY*0.5, self.housemainZ*1.4))
-            window18 = bpy.context.object
+            window19 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x-6.6 , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+9))
+            window20 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x+0 , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+9))
+            window21 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x+6.6 , bpy.data.objects['mainhouse'].location.y-7.5, bpy.data.objects['mainhouse'].location.z+9))
 
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.3, self.housemainY*0.5, self.housemainZ*1.4))
-            window19 = bpy.context.object
+            window22 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x+6.6 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+9))
+            window23 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x+0 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+9))
+            window24 = bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=(bpy.data.objects['mainhouse'].location.x-6.6 , bpy.data.objects['mainhouse'].location.y+7.5, bpy.data.objects['mainhouse'].location.z+9))
 
+            window25 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=(bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y-3.75, bpy.data.objects['mainhouse'].location.z+9))
+            window26 = bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=(bpy.data.objects['mainhouse'].location.x+10 , bpy.data.objects['mainhouse'].location.y+3.75, bpy.data.objects['mainhouse'].location.z+9))
 
-            bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90 +5))
-            window20 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90+5))
-            window21 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , 0.25*self.housemainY, self.housemainZ*0.90+5))
-            window22 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(windows_size_x, windows_size_y, windows_size_z),location=( -self.housemainX *0.5 , -0.25*self.housemainY, self.housemainZ*0.90+5))
-            window23 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0.33, -self.housemainY*0.5, self.housemainZ*0.90+5))
-            window24 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*-0.33, -self.housemainY*0.5, self.housemainZ*0.90+5))
-            window25 = bpy.context.object
-
-            bpy.ops.mesh.primitive_cube_add(scale=(sidewindows_size_x, sidewindows_size_y, sidewindows_size_z),location=( self.housemainX*0, -self.housemainY*0.5, self.housemainZ*0.90+5))
-            window26 = bpy.context.object
             
-            windows_second_floor = [window17,window18,window19,window20,window21,window22,window23,window24,window25,window26]
+            windows = [window17,window18,window19,window20,window21,window22,window23,window24,window25,window26]
 
-            for index in range(len(windows_second_floor)):
-                windows_second_floor[index].data.materials.append(self.mirror_material()) 
+            
+       
+            
+            
+
+            
+        # for i in range(len(windows)): 
+        #     windows[i].data.materials.append(new_mat)
+
+        #     new_mat.use_nodes = True
+        #     nodes = new_mat.node_tree.nodes
+
+        #     #Operators
+        #     principled_node = nodes.get('Principled BSDF')
+
+        #     #load image to node
+        #     # Manuel: /Users/manuelhaugg/MedienproduktionSS21/materials/street.png
+        #     bpy.ops.image.open(filepath="Users/Vinzenz/Documents/MedienProd/Materials/Holzboden/WoodFloor047_1K_Color.jpg")
+        #     my_image_node = nodes.new("ShaderNodeTexImage")
+        #     my_image_node.image = bpy.data.images["WoodFloor047_1K_Color.jpg"]
+            
+        #     #linking the nodes
+        #     links = new_mat.node_tree.links
+        #     links.new(my_image_node.outputs[0], principled_node.inputs[0]) 
+        # windows
+        # print(windows)      
+
+
 
 house= house()
 house.generate_building()
 house.generate_Window()
-
+house.generate_ground()
+#house.generate_Garagedoor()
