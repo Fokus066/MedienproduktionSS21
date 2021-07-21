@@ -66,7 +66,7 @@ class Environment_Operator(bpy.types.Operator):
 
     # Define class properties that will show up as UI elements on the dialog
     sunlight_enum: bpy.props.EnumProperty( name="Daytime", description="Select an option", items=[ ("OP1", "daytime",  "set daytime"), ("OP2", "night-time",  "set night-time")])
-    meadow_size: IntProperty(name="Meadow size", description="Square area of meadow", default=20, min=1, max=50)
+    meadow_size: IntProperty(name="Meadow size", description="Square area of meadow", default=25, min=25, max=75)
 
     # Define class properties that will show up as UI elements on the dialog
     presets: EnumProperty(name="Preset", description="Available sapling tree presets", items=getPresets)
@@ -93,7 +93,7 @@ class Environment_Operator(bpy.types.Operator):
       
         if self.sunlight_enum == "OP1":           
             sun.data.energy = 10
-            sun.data.color = (0.939978, 1, 0.355009)      
+            sun.data.color = (1, 1, 1)      
             sun.location = (-15,-70,45)        
             sun.rotation_euler = (0.872665, -0.349066 ,-0.261799)
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = (0.243161, 0.887797, 1, 0.421429)
@@ -174,22 +174,33 @@ class Environment_Operator(bpy.types.Operator):
 
         
     
-    def generate_Street(self):
+    def generate_Streets(self):
         bpy.ops.mesh.primitive_plane_add()
-        street = bpy.context.active_object
-        street.name = "street"
+        street1 = bpy.context.active_object
+        street1.name = "street"
 
-        #move Object
-        street.location = (0, -25,0)
-
-        #edit plane
+        #edit plane 1
         bpy.ops.object.editmode_toggle()
         bpy.ops.transform.resize(value=(self.meadow_size,5,1))
         bpy.ops.object.editmode_toggle()
 
+        bpy.ops.mesh.primitive_plane_add()
+        street2 = bpy.context.active_object
+        street2.name = "street"
+
+        #edit plane 2
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.transform.resize(value=(self.meadow_size,5,1))
+        bpy.ops.object.editmode_toggle()
+
+        #move Object
+        street1.location = (0, -25,0)
+        street2.location = (0, -78,0)
+
         #create the Material
         new_mat = bpy.data.materials.new(name = "My Material")
-        street.data.materials.append(new_mat)
+        street1.data.materials.append(new_mat)
+        street2.data.materials.append(new_mat)
 
         new_mat.use_nodes = True
         nodes = new_mat.node_tree.nodes
@@ -349,13 +360,13 @@ class Environment_Operator(bpy.types.Operator):
         lantern_lights =[]
 
         for i in range(round((self.meadow_size/2)-1)):
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -30, 5), scale=( 0.5, 0.5, 10))
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 15), -30, 5), scale=( 0.5, 0.5, 10))
             lantern= bpy.context.active_object 
             lantern.name='lantern'.format(i) 
             lantern_array.append(lantern)
             lantern_array[i].data.materials.append(black_mat)
 
-            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 5), -30, 10.34), scale=(0.5, 0.5, 0.7))
+            bpy.ops.mesh.primitive_cylinder_add(location=(-self.meadow_size + (i * 15), -30, 10.34), scale=(0.5, 0.5, 0.7))
             lantern_light= bpy.context.active_object 
             lantern_light.name='lantern'.format(i) 
             lantern_lights.append(lantern_light)
@@ -661,24 +672,124 @@ class Environment_Operator(bpy.types.Operator):
             fence= bpy.context.active_object
             fence.name = "fence_horinzontal".format(i)  
             fences_horinzontal.append(fence)
-            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())       
+            fences_horinzontal[i].data.materials.append(self.add_fence_texture_horizontal())   
+
+    def cloud_material(self) -> bpy.types.Material:
+
+        cloud_mat: bpy.types.Material = bpy.data.materials.new("clouds texture")
+        cloud_mat.use_nodes = True
+        
+        #Get the node in its node tree (replace the name below)
+        node_to_delete =  cloud_mat.node_tree.nodes['Principled BSDF']
+        node_material =  cloud_mat.node_tree.nodes['Material Output']
+
+        #Remove it
+        cloud_mat.node_tree.nodes.remove( node_to_delete )
+        cloud_mat.node_tree.nodes.remove( node_material)
+
+        nodes_cloud: typing.List[bpy.types.Node] = cloud_mat.node_tree.nodes
+        node_math: bpy.types.Node = nodes_cloud.new("ShaderNodeMath")
+        node_colorramp: bpy.types.Node = nodes_cloud.new("ShaderNodeValToRGB")
+        node_noise_1: bpy.types.Node = nodes_cloud.new("ShaderNodeTexNoise")
+        node_noise_2: bpy.types.Node = nodes_cloud.new("ShaderNodeTexNoise")
+        node_mix: bpy.types.Node = nodes_cloud.new("ShaderNodeMixRGB")
+        node_texcoord: bpy.types.Node = nodes_cloud.new("ShaderNodeTexCoord")         
+        node_mapping: bpy.types.Node = nodes_cloud.new("ShaderNodeMapping")
+        node_volume: bpy.types.Node = nodes_cloud.new("ShaderNodeVolumePrincipled")
+        node_matoutput: bpy.types.Node = nodes_cloud.new("ShaderNodeOutputMaterial")
+
+        node_volume.inputs[0].default_value = (1, 1, 1, 1)
+
+        node_math.operation = 'MULTIPLY'
+        node_math.inputs[1].default_value = 1000
+
+        node_colorramp.color_ramp.elements[0].color = (0, 0, 0, 1)
+        node_colorramp.color_ramp.elements[0].position = 0.709
+        node_colorramp.color_ramp.elements[1].color = (1, 1, 1, 1)
+
+        node_noise_1.inputs[5].default_value = 2
+
+        node_noise_1.inputs[2].default_value = 2.4
+        node_noise_2.inputs[2].default_value = 2.4
+
+        node_mix.blend_type = 'MIX'
+        node_mix.inputs[0].default_value = 0.8
+
+        cloud_mat.node_tree.links.new(node_colorramp.outputs[0], node_math.inputs[0])
+        cloud_mat.node_tree.links.new(node_noise_1.outputs[0], node_colorramp.inputs[0])
+        cloud_mat.node_tree.links.new(node_mix.outputs[0], node_noise_1.inputs[0])
+        cloud_mat.node_tree.links.new(node_mapping.outputs[0], node_mix.inputs[1])
+        
+        cloud_mat.node_tree.links.new(node_noise_2.outputs[1], node_mix.inputs[2])
+        cloud_mat.node_tree.links.new(node_texcoord.outputs[3], node_mapping.inputs[0])
+        
+        cloud_mat.node_tree.links.new(node_texcoord.outputs[3], node_noise_2.inputs[0])
+        cloud_mat.node_tree.links.new( node_math.outputs[0], node_volume.inputs[2])
+        cloud_mat.node_tree.links.new( node_volume.outputs[0], node_matoutput.inputs[1])
+
+        return cloud_mat
+
+    def generate_clouds(self):
+
+        # run the actual tree generating code
+        bpy.ops.mesh.primitive_cube_add(location=(0, 0, 35),scale=(self.meadow_size*2,self.meadow_size*2, 3))
+        cloud1 = bpy.context.object
+        bpy.ops.mesh.primitive_cube_add(location=(0, -53, 35),scale=(self.meadow_size*2,self.meadow_size*2, 3))
+        cloud2= bpy.context.object
+                    
+        cloud1.name = "cloud"
+        cloud2.name = "cloud"
+
+        cloud1.data.materials.append(self.cloud_material())
+        cloud2.data.materials.append(self.cloud_material())    
 
           
     
     # Run the actual code upon pressing "OK" on the dialog
     def execute(self, context):
 
+        bpy.ops.object.select_all(action='SELECT') # selektiert alle Objekte
+        bpy.ops.object.delete(use_global=False, confirm=False) # löscht selektierte objekte
+        bpy.ops.outliner.orphans_purge() # löscht überbleibende Meshdaten etc.
+        bpy.ops.object.select_all(action='DESELECT')
+
+        test_house = TestHouse()
+
+        if self.meadow_size > 25:
+            diff = self.meadow_size - 25
+            test_house.x = test_house.x - diff
+
+        test_house.generate_obj()
+        
+        if self.meadow_size >= 50 and self.meadow_size <= 75:
+            factor = 50
+            second_house = TestHouse()
+            second_house.x = test_house.x + factor
+            second_house.generate_obj()
+            if self.meadow_size is 75:
+                third_house = TestHouse()
+                third_house.x = second_house.x + factor
+                third_house.generate_obj()
+
+
         self.generate_fence()
         self.generate_meadow()
         self.generate_Water()
-        self.generate_Street()
+        self.generate_Streets()
         self.light_setting()
         self.generate_pavement()
         self.generate_trees()  
         self.generate_stones()
         self.generate_lantern()
+        self.generate_clouds()
         
         return {'FINISHED'}
+
+class TestHouse:
+    y = -53
+    x = 5
+    def generate_obj(self):
+        bpy.ops.mesh.primitive_cube_add(location=(self.x, self.y, 0),scale=(20,15, 10))
 
 
 classes = [Environment_Panel,Environment_Operator, Delete_Scene]

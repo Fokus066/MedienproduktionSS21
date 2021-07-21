@@ -1,11 +1,7 @@
 Bis 22.07
 
-- automatisches Leeren der Szene
-
-- Haus Mehrstöckig! Garage veränderbar (Vinzenz)
-
-- Haus Weg zur Straße Zaun drum (Vinzenz)
-
-- mehrere Häuser generieren? (optional)
+- Haus Weg zur Straße (Vinzenz)
 
 - Code Refactoring 
+
+- random Stockwerke checkbox
